@@ -52,9 +52,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         let baseAddress = CVPixelBufferGetBaseAddressOfPlane(buffer, 0)
         
-        let pointer = baseAddress.//assumingMemoryBound(to: UInt8.self)
-        let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)s
-        let byteBuffer = UnsafeMutablePointer<UInt8>(pointer)!
+        let pointer = baseAddress//.assumingMemoryBound(to: UInt8.self)
+        let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
+        let byteBuffer = UnsafeMutablePointer<UInt8>(pointer)
         
         // Compute mean and standard deviation of pixel luma values
         var sum = 0
@@ -64,9 +64,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
         let mean = (Double(sum)/Double(pixels))
         
-        var sqrdDiffs = 0
+        var sqrdDiffs = 0.0
         for index in 0...pixels-1 {
-            var sqrdDiff = pow((Int(byteBuffer[index]) - mean), 2)
+            let sqrdDiff = pow((Double(byteBuffer[index]) - mean), 2)
             sqrdDiffs += sqrdDiff
         }
         let stdDev = sqrt(Double(sqrdDiffs))
