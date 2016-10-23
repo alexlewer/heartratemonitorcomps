@@ -15,22 +15,22 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        captureDevice = AVCaptureDevice.defaultDeviceWithMediaType(AVMediaTypeVideo) as AVCaptureDevice
+        captureDevice = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) as AVCaptureDevice
         session = AVCaptureSession()
         session!.sessionPreset = AVCaptureSessionPresetHigh
         do {
             try captureDevice?.lockForConfiguration()
-            captureDevice?.torchMode = .On
+            captureDevice?.torchMode = .on
             captureDevice?.unlockForConfiguration()
             let deviceInput = try AVCaptureDeviceInput(device: captureDevice)
             session!.beginConfiguration()
             session!.addInput(deviceInput)
             let dataOutput = AVCaptureVideoDataOutput()
-            dataOutput.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as NSString) : NSNumber(unsignedInt: kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)]
+            dataOutput.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as NSString) : NSNumber(value: kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)]
             dataOutput.alwaysDiscardsLateVideoFrames = true
             session!.addOutput(dataOutput)
             session!.commitConfiguration()
-            let queue = dispatch_queue_create("testqueue", nil)
+            let queue = DispatchQueue(label: "testqueue")
             dataOutput.setSampleBufferDelegate(self, queue: queue)
             session!.startRunning()
             
@@ -46,15 +46,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         // Dispose of any resources that can be recreated.
     }
     
-    func captureOutput( captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
+    func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
         let buffer : CVPixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
-        CVPixelBufferLockBaseAddress(buffer, CVPixelBufferLockFlags(CVOptionFlags(0)))
+        CVPixelBufferLockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
         
         let baseAddress = CVPixelBufferGetBaseAddressOfPlane(buffer, 0)
-        
-        let pointer = baseAddress//.assumingMemoryBound(to: UInt8.self)
+        let pointer = baseAddress?.assumingMemoryBound(to: UInt8.self)
         let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
-        let byteBuffer = UnsafeMutablePointer<UInt8>(pointer)
+        let byteBuffer = UnsafeMutablePointer<UInt8>(pointer)!
         
         // Compute mean and standard deviation of pixel luma values
         var sum = 0
@@ -73,7 +72,5 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         print(mean)
         print(stdDev)
-        
     }
 }
-
