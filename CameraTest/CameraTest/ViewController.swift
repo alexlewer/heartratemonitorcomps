@@ -12,6 +12,13 @@ import AVFoundation
 class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
     var captureDevice : AVCaptureDevice?
     var session : AVCaptureSession?
+    lazy var previewLayer: AVCaptureVideoPreviewLayer = {
+        let preview =  AVCaptureVideoPreviewLayer(session: self.session)
+//        preview.bounds = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: self.view.bounds.height)
+//        preview.position = CGPoint(x: CGRectGetMidX(self.view.bounds), y: CGRectGetMidY(self.view.bounds))
+        preview?.videoGravity = AVLayerVideoGravityResize
+        return preview!
+    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,6 +39,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             session!.commitConfiguration()
             let queue = DispatchQueue(label: "testqueue")
             dataOutput.setSampleBufferDelegate(self, queue: queue)
+            
+            self.view.layer.addSublayer(previewLayer)
+            previewLayer.frame = self.view.layer.frame
             session!.startRunning()
             
         } catch let error as NSError {
@@ -68,9 +78,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             let sqrdDiff = pow((Double(byteBuffer[index]) - mean), 2)
             sqrdDiffs += sqrdDiff
         }
-        let stdDev = sqrt(Double(sqrdDiffs))
+        let stdDev = sqrt((Double(sqrdDiffs)/Double(pixels)))
         
-        print(mean)
-        print(stdDev)
+        NSLog("Mean is %@", String(mean))
+        NSLog("StdDev is %@", String(stdDev))
     }
 }

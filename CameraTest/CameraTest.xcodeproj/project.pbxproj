@@ -421,8 +421,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = RNM982WYFQ;
-				INFOPLIST_FILE = CameraTest/Info.plist;
+				DEVELOPMENT_TEAM = G75RTEYC74;
+				INFOPLIST_FILE = "$(SRCROOT)/CameraTest/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.aidanhb.CameraTest;
@@ -439,8 +439,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = RNM982WYFQ;
-				INFOPLIST_FILE = CameraTest/Info.plist;
+				DEVELOPMENT_TEAM = G75RTEYC74;
+				INFOPLIST_FILE = "$(SRCROOT)/CameraTest/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.aidanhb.CameraTest;
