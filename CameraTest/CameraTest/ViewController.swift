@@ -10,12 +10,18 @@ import UIKit
 import AVFoundation
 
 class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
+    
+    @IBOutlet weak var coverageLabel: UILabel!
+    
     var captureDevice : AVCaptureDevice?
     var session : AVCaptureSession?
+    
+    let MAX_LUMA_MEAN = Double(100)
+    let MIN_LUMA_MEAN = Double(55)
+    let MAX_LUMA_STD_DEV = Double(20)
+    
     lazy var previewLayer: AVCaptureVideoPreviewLayer = {
         let preview =  AVCaptureVideoPreviewLayer(session: self.session)
-//        preview.bounds = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: self.view.bounds.height)
-//        preview.position = CGPoint(x: CGRectGetMidX(self.view.bounds), y: CGRectGetMidY(self.view.bounds))
         preview?.videoGravity = AVLayerVideoGravityResize
         return preview!
     }()
@@ -40,8 +46,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             let queue = DispatchQueue(label: "testqueue")
             dataOutput.setSampleBufferDelegate(self, queue: queue)
             
-            self.view.layer.addSublayer(previewLayer)
-            previewLayer.frame = self.view.layer.frame
+//            self.view.layer.addSublayer(previewLayer)
+//            previewLayer.frame = self.view.layer.frame
             session!.startRunning()
             
         } catch let error as NSError {
@@ -54,6 +60,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    
+    func cameraIsCovered(lumaMean: Double, lumaStdDev: Double) -> Bool{
+        if ((lumaMean < MAX_LUMA_MEAN) && (lumaMean > MIN_LUMA_MEAN) && (lumaStdDev < MAX_LUMA_STD_DEV)) {
+            return true
+        }
+        return false
     }
     
     func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
@@ -80,7 +93,18 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
         let stdDev = sqrt((Double(sqrdDiffs)/Double(pixels)))
         
-        NSLog("Mean is %@", String(mean))
-        NSLog("StdDev is %@", String(stdDev))
+        var coveredText = "Camera is not covered"
+        
+        if cameraIsCovered(lumaMean: mean, lumaStdDev: stdDev) {
+            NSLog("Camera is covered")
+            coveredText = "Camera is covered"
+        } else {
+            NSLog("Camera is not covered")
+        }
+        
+        DispatchQueue.main.async() {
+            self.coverageLabel.text = coveredText
+        }
+        
     }
 }
