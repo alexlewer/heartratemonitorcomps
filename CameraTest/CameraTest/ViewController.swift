@@ -12,9 +12,20 @@ import AVFoundation
 class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
     var captureDevice : AVCaptureDevice?
     var session : AVCaptureSession?
+    var stateQueue : YChannelStateQueue?
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        initializeCamera()
+        // Do any additional setup after loading the view, typically from a nib.
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+    
+    func initializeCamera() {
         captureDevice = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) as AVCaptureDevice
         session = AVCaptureSession()
         session!.sessionPreset = AVCaptureSessionPresetHigh
@@ -33,17 +44,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             let queue = DispatchQueue(label: "testqueue")
             dataOutput.setSampleBufferDelegate(self, queue: queue)
             session!.startRunning()
+            stateQueue = YChannelStateQueue()
             
         } catch let error as NSError {
             NSLog("\(error)")
         }
-        
-        // Do any additional setup after loading the view, typically from a nib.
-    }
-    
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+
     }
     
     func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
@@ -59,7 +65,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         for index in 0...pixels-1 {
             sum += Int(byteBuffer[index])
         }
-        print(Double(sum)/Double(pixels))
+        stateQueue?.addValue(value: Double(sum)/Double(pixels))
+        print(stateQueue?.getState())
     }
 }
 
