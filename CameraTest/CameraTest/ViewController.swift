@@ -10,6 +10,7 @@ import UIKit
 import AVFoundation
 
 class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
+    @IBOutlet weak var previewView: UIImageView!
     
     @IBOutlet weak var coverageLabel: UILabel!
     
@@ -17,7 +18,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var session : AVCaptureSession?
     
     let MAX_LUMA_MEAN = Double(100)
-    let MIN_LUMA_MEAN = Double(55)
+    let MIN_LUMA_MEAN = Double(60)
     let MAX_LUMA_STD_DEV = Double(20)
     
     lazy var previewLayer: AVCaptureVideoPreviewLayer = {
@@ -46,6 +47,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             let queue = DispatchQueue(label: "testqueue")
             dataOutput.setSampleBufferDelegate(self, queue: queue)
             
+            previewView.layer.addSublayer(previewLayer)
+            previewLayer.frame = previewView.bounds
 //            self.view.layer.addSublayer(previewLayer)
 //            previewLayer.frame = self.view.layer.frame
             session!.startRunning()
@@ -92,6 +95,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             sqrdDiffs += sqrdDiff
         }
         let stdDev = sqrt((Double(sqrdDiffs)/Double(pixels)))
+        
+        NSLog("Mean and stdDev: \(String(mean))\t\(String(stdDev))")
         
         var coveredText = "Camera is not covered"
         

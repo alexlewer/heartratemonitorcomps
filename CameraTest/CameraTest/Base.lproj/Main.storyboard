@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -18,20 +19,30 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Camera is not covered" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ELp-ob-fKX">
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <nil key="textColor"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="RIh-q4-cCp">
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="317" id="cED-Q2-5Ip"/>
+                                </constraints>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Camera is not covered" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ELp-ob-fKX" colorLabel="IBBuiltInLabel-Yellow">
+                                <frame key="frameInset" minX="101" minY="382" width="172" height="21"/>
+                                <fontDescription key="fontDescription" style="UICTFontTextStyleHeadline"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="ELp-ob-fKX" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="245" id="2J8-GG-0ba"/>
-                            <constraint firstItem="ELp-ob-fKX" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="uCR-ji-nAV"/>
+                            <constraint firstItem="RIh-q4-cCp" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="HxI-A1-FgI"/>
+                            <constraint firstItem="RIh-q4-cCp" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="14" id="kIa-cZ-Dxt"/>
+                            <constraint firstItem="ELp-ob-fKX" firstAttribute="top" secondItem="RIh-q4-cCp" secondAttribute="bottom" constant="31" id="kKB-OE-soa"/>
+                            <constraint firstItem="RIh-q4-cCp" firstAttribute="centerX" secondItem="ELp-ob-fKX" secondAttribute="centerX" id="rHI-mN-UhQ"/>
+                            <constraint firstItem="RIh-q4-cCp" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="z4s-wm-LYC"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="coverageLabel" destination="ELp-ob-fKX" id="4QF-c3-7vJ"/>
+                        <outlet property="previewView" destination="RIh-q4-cCp" id="ll3-JT-Ehc"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
