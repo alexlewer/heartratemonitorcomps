@@ -9,26 +9,50 @@
 import UIKit
 import AVFoundation
 
+public extension UIView {
+    func fadeIn(withDuration duration: TimeInterval = 1.0) {
+        UIView.animate(withDuration: duration, animations: {
+            self.alpha = 1.0
+        })
+    }
+}
+
 class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
-    @IBOutlet weak var previewView: UIImageView!
     
-    @IBOutlet weak var coverageLabel: UILabel!
+    var timer = Timer()
+    func pulse(imageView: UIImageView, interval: Double) {
+        let intv = DispatchTime.now() + interval
+        DispatchQueue.main.asyncAfter(deadline: intv) {
+            imageView.alpha = 0.7
+            imageView.fadeIn()
+            self.pulse(imageView: imageView, interval: interval)
+        }
+    }
+    
+    var startTime = TimeInterval()
     
     var captureDevice : AVCaptureDevice?
     var session : AVCaptureSession?
+    
+    var camCovered = false
     
     let MAX_LUMA_MEAN = Double(100)
     let MIN_LUMA_MEAN = Double(60)
     let MAX_LUMA_STD_DEV = Double(20)
     
-    lazy var previewLayer: AVCaptureVideoPreviewLayer = {
-        let preview =  AVCaptureVideoPreviewLayer(session: self.session)
-        preview?.videoGravity = AVLayerVideoGravityResize
-        return preview!
-    }()
+    @IBOutlet var timerText: UILabel!
+    @IBOutlet var buttonText: UIButton!
+    @IBOutlet var hint1: UILabel!
+    @IBOutlet var hint2: UILabel!
+    @IBOutlet var heartView: UIImageView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        detectFingerCoverage()
+        // Do any additional setup after loading the view, typically from a nib.
+    }
+    
+    func detectFingerCoverage() {
         captureDevice = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) as AVCaptureDevice
         session = AVCaptureSession()
         session!.sessionPreset = AVCaptureSessionPresetHigh
@@ -44,20 +68,36 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             dataOutput.alwaysDiscardsLateVideoFrames = true
             session!.addOutput(dataOutput)
             session!.commitConfiguration()
-            let queue = DispatchQueue(label: "testqueue")
+            let queue = DispatchQueue(label: "queue")
             dataOutput.setSampleBufferDelegate(self, queue: queue)
-            
-            previewView.layer.addSublayer(previewLayer)
-            previewLayer.frame = previewView.bounds
-//            self.view.layer.addSublayer(previewLayer)
-//            previewLayer.frame = self.view.layer.frame
             session!.startRunning()
             
         } catch let error as NSError {
             NSLog("\(error)")
         }
         
-        // Do any additional setup after loading the view, typically from a nib.
+    }
+    
+    func updateDisplay() {
+        if self.camCovered {
+            hint1.text = "Signal detected!"
+            hint2.text = "Please do not remove your finger from the camera."
+            let aSelector : Selector = #selector(ViewController.updateTime)
+            timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: aSelector, userInfo: nil, repeats: true)
+            startTime = NSDate.timeIntervalSinceReferenceDate
+            heartView.image = UIImage(named: "Heart_normal")
+            self.heartView.alpha = 0.0
+            self.heartView.fadeIn()
+            pulse(imageView: self.heartView, interval: 1.5)
+        }
+        else {
+            timer.invalidate()
+            hint1.text = "Waiting for signal."
+            hint2.text = "Please cover the camera with your finger."
+            timerText.text = "00:00:00"
+            heartView.stopAnimating()
+            heartView.image = UIImage(named: "Heart_inactive")
+        }
     }
     
     override func didReceiveMemoryWarning() {
@@ -96,20 +136,42 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
         let stdDev = sqrt((Double(sqrdDiffs)/Double(pixels)))
         
-        NSLog("Mean and stdDev: \(String(mean))\t\(String(stdDev))")
-        
-        var coveredText = "Camera is not covered"
+        var covered = false
         
         if cameraIsCovered(lumaMean: mean, lumaStdDev: stdDev) {
             NSLog("Camera is covered")
-            coveredText = "Camera is covered"
+            covered = true
         } else {
             NSLog("Camera is not covered")
         }
         
         DispatchQueue.main.async() {
-            self.coverageLabel.text = coveredText
+            if covered != self.camCovered {
+                self.camCovered = covered
+                self.updateDisplay()
+            }
         }
         
     }
+    
+    func updateTime() {
+        let currentTime = NSDate.timeIntervalSinceReferenceDate
+        //Find the difference between current time and start time.
+        var elapsedTime: TimeInterval = currentTime - startTime
+        //Calculate the minutes in elapsed time.
+        let minutes = UInt8(elapsedTime / 60.0)
+        elapsedTime -= (TimeInterval(minutes) * 60)
+        //Calculate the seconds in elapsed time.
+        let seconds = UInt8(elapsedTime)
+        elapsedTime -= TimeInterval(seconds)
+        //Find out the fraction of milliseconds to be displayed.
+        let fraction = UInt8(elapsedTime * 100)
+        //Add the leading zero for minutes, seconds and millseconds and store them as string constants
+        let strMinutes = String(format: "%02d", minutes)
+        let strSeconds = String(format: "%02d", seconds)
+        let strFraction = String(format: "%02d", fraction)
+        //Concatenate minuets, seconds and milliseconds as assign it to the UILabel
+        timerText.text = "\(strMinutes):\(strSeconds):\(strFraction)"
+    }
+    
 }
