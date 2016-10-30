@@ -40,17 +40,55 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     let MIN_LUMA_MEAN = Double(60)
     let MAX_LUMA_STD_DEV = Double(20)
     
+    func displayHeart(imageName: String) {
+        heartView = UIImageView(frame: CGRect(x: 121, y: 181, width: 170, height: 170))
+        heartView.image = UIImage(named: imageName)
+        self.view.addSubview(heartView)
+    }
+    
     @IBOutlet var timerText: UILabel!
     @IBOutlet var buttonText: UIButton!
     @IBOutlet var hint1: UILabel!
     @IBOutlet var hint2: UILabel!
     @IBOutlet var heartView: UIImageView!
     
+    @IBAction func start(sender: AnyObject) {
+        if buttonText.currentTitle == "Start" {
+            buttonText.setTitle("Stop", for: UIControlState.normal)
+            detectFingerCoverage()
+        }
+        else {
+            toggleFlashlight()
+            timer.invalidate()
+            heartView.removeFromSuperview()
+            displayHeart(imageName: "Heart_inactive")
+            buttonText.setTitle("Start", for: UIControlState.normal)
+            hint1.text = "Waiting for signal."
+            hint2.text = "Please cover the camera by your finger."
+            timerText.text = "00:00:00"
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        detectFingerCoverage()
+        displayHeart(imageName: "Heart_inactive")
         // Do any additional setup after loading the view, typically from a nib.
     }
+    
+    func toggleFlashlight() {
+        captureDevice = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) as AVCaptureDevice
+        do {
+            try captureDevice?.lockForConfiguration()
+            if captureDevice?.torchMode == .on {
+                captureDevice?.torchMode = .off
+            } else {
+                captureDevice?.torchMode = .on
+            }
+        } catch let error as NSError {
+            NSLog("\(error)")
+        }
+    }
+
     
     func detectFingerCoverage() {
         captureDevice = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) as AVCaptureDevice
@@ -80,23 +118,21 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     func updateDisplay() {
         if self.camCovered {
+            heartView.image = UIImage(named: "Heart_normal")
             hint1.text = "Signal detected!"
             hint2.text = "Please do not remove your finger from the camera."
             let aSelector : Selector = #selector(ViewController.updateTime)
             timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: aSelector, userInfo: nil, repeats: true)
             startTime = NSDate.timeIntervalSinceReferenceDate
-            heartView.image = UIImage(named: "Heart_normal")
-            self.heartView.alpha = 0.0
-            self.heartView.fadeIn()
             pulse(imageView: self.heartView, interval: 1.5)
         }
         else {
             timer.invalidate()
+            heartView.removeFromSuperview()
+            displayHeart(imageName: "Heart_inactive")
             hint1.text = "Waiting for signal."
             hint2.text = "Please cover the camera with your finger."
             timerText.text = "00:00:00"
-            heartView.stopAnimating()
-            heartView.image = UIImage(named: "Heart_inactive")
         }
     }
     
