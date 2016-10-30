@@ -55,10 +55,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     @IBAction func start(sender: AnyObject) {
         if buttonText.currentTitle == "Start" {
             buttonText.setTitle("Stop", for: UIControlState.normal)
-            detectFingerCoverage()
+            startCameraProcesses()
         }
         else {
+            // End camera processes
+            session!.stopRunning()
             toggleFlashlight()
+            
             timer.invalidate()
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_inactive")
@@ -90,7 +93,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     }
 
     
-    func detectFingerCoverage() {
+    func startCameraProcesses() {
         captureDevice = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) as AVCaptureDevice
         session = AVCaptureSession()
         session!.sessionPreset = AVCaptureSessionPresetHigh
@@ -141,7 +144,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         // Dispose of any resources that can be recreated.
     }
     
-    func cameraIsCovered(lumaMean: Double, lumaStdDev: Double) -> Bool{
+    func getCoverageFromBrightness(lumaMean: Double, lumaStdDev: Double) -> Bool{
         if ((lumaMean < MAX_LUMA_MEAN) && (lumaMean > MIN_LUMA_MEAN) && (lumaStdDev < MAX_LUMA_STD_DEV)) {
             return true
         }
@@ -157,7 +160,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
         let byteBuffer = UnsafeMutablePointer<UInt8>(pointer)!
         
+        detectFingerCoverage(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
+        
         // Compute mean and standard deviation of pixel luma values
+        
+    }
+    
+    func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) {
         var sum = 0
         let pixels = 1080 * bytesPerRow
         for index in 0...pixels-1 {
@@ -174,7 +183,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         var covered = false
         
-        if cameraIsCovered(lumaMean: mean, lumaStdDev: stdDev) {
+        if getCoverageFromBrightness(lumaMean: mean, lumaStdDev: stdDev) {
             NSLog("Camera is covered")
             covered = true
         } else {
@@ -187,7 +196,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 self.updateDisplay()
             }
         }
-        
     }
     
     func updateTime() {
