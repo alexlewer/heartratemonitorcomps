@@ -1,5 +1,3 @@
-*.xcodeproj
-
 !*.xcodeproj/xcshareddata
 
 build
