@@ -11,6 +11,7 @@ import AVFoundation
 
 class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
     var captureDevice : AVCaptureDevice?
+    @IBOutlet var label: UILabel!
     var session : AVCaptureSession?
     var stateQueue : YChannelStateQueue?
     
@@ -20,6 +21,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         super.viewDidLoad()
         initializeCamera()
         observation = [Int]()
+        self.label.text = "hi"
         // Do any additional setup after loading the view, typically from a nib.
     }
     
@@ -80,15 +82,32 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         [0.0799,0.6646,0.1136,0.1420]]
             let p = [0.2, 0.8]
             let states = [0,1]
+            
             // 4 obs, increasing, decreasing, local max and local min
-            print(viterbi(obs:observation!, trans:trans, emit:emit, states:states, initial:p))
+            print(observation!)
+            print(calculate(states: viterbi(obs:observation!, trans:trans, emit:emit, states:states, initial:p).1))
+//            setLabelText(text: String(calculate(states: viterbi(obs:observation!, trans:trans, emit:emit, states:states, initial:p).1)))
+
+            DispatchQueue.main.async {
+                self.label!.text = String(self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1))
+            }            
+            
+        
+        
+
+            print("@@@@@@@@@@@")
+            print(self.label.text)
+            print("@@@@@@@@@@@@")
+            
+//            label.text = String(calculate(states: viterbi(obs:observation!, trans:trans, emit:emit, states:states, initial:p).1))
             let calendar = NSCalendar.current
             let seconds = calendar.component(.second, from: NSDate() as Date)
-            print(seconds)
             observation!.removeAll()
         }
 
     }
+
+    
     
     func viterbi(obs:Array<Int>, trans:Array<Array<Double>>, emit:Array<Array<Double>>, states: Array<Int>, initial:Array<Double>)->(Double, [Int]){
         
@@ -140,6 +159,53 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         return (maxProb, path[bestState!]!)
         
     }
+    
+    func calculate(states:Array<Int>)->Int{
+        
+        let startSt = states[0]
+        
+        var firstEndState = 0
+        
+        var secondEndState = 0
+        
+        var meetSecondStart = false
+        
+        
+        
+        for i in 0..<states.count{
+            
+            if states[i] != startSt && firstEndState==0{
+                
+                firstEndState = i
+                
+                
+                
+            }
+                
+            else if states[i] == startSt && firstEndState != 0{
+                
+                meetSecondStart = true
+                
+            }
+            
+            if meetSecondStart && states[i] != startSt{
+                
+                secondEndState = i
+                
+                
+                let heartRate = 60.0/(Double(secondEndState - firstEndState + 1)/30.0)
+                
+                return Int(heartRate)
+                
+                
+            }
+            
+        }
+        
+        return 0
+        
+    }
+
 
 }
 
