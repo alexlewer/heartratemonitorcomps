@@ -76,7 +76,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             observation!.append((stateQueue?.getState())!)
         }
         
-        if (observation!.count == 90) {
+        if (observation!.count == 150) {
             let trans = [[0.6773,0.3227],[0.0842,0.9158]]
             let emit = [[0.7689,0.0061,0.1713,0.0537],
                         [0.0799,0.6646,0.1136,0.1420]]
@@ -85,6 +85,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             
             // 4 obs, increasing, decreasing, local max and local min
             print(observation!)
+            print(viterbi(obs:observation!, trans:trans, emit:emit, states:states, initial:p))
             print(calculate(states: viterbi(obs:observation!, trans:trans, emit:emit, states:states, initial:p).1))
 //            setLabelText(text: String(calculate(states: viterbi(obs:observation!, trans:trans, emit:emit, states:states, initial:p).1)))
 
@@ -161,43 +162,23 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     }
     
     func calculate(states:Array<Int>)->Int{
-        
         let startSt = states[0]
-        
         var firstEndState = 0
-        
         var secondEndState = 0
-        
         var meetSecondStart = false
-        
-        
-        
         for i in 0..<states.count{
             
             if states[i] != startSt && firstEndState==0{
-                
                 firstEndState = i
-                
-                
-                
             }
                 
             else if states[i] == startSt && firstEndState != 0{
-                
                 meetSecondStart = true
-                
             }
-            
             if meetSecondStart && states[i] != startSt{
-                
                 secondEndState = i
-                
-                
-                let heartRate = 60.0/(Double(secondEndState - firstEndState + 1)/30.0)
-                
+                let heartRate = 60.0/(Double(secondEndState - firstEndState + 1)/50.0)
                 return Int(heartRate)
-                
-                
             }
             
         }
