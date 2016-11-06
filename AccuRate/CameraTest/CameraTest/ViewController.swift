@@ -200,7 +200,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         var sqrdDiffs = 0.0
         for index in 0...pixels-1 {
-            let sqrdDiff = pow((Double(byteBuffer[index]) - mean), 2)
+            let sqrdDiff = (Double(byteBuffer[index]) - mean) * (Double(byteBuffer[index]) - mean)
             sqrdDiffs += sqrdDiff
         }
         let stdDev = sqrt((Double(sqrdDiffs)/Double(pixels)))
@@ -211,6 +211,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) {
         
         let meanAndStdDev = getMeanAndStdDev(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
+//        let meanAndStdDev = (70.0, 19.0)
         
         let mean = meanAndStdDev.0
         let stdDev = meanAndStdDev.1
