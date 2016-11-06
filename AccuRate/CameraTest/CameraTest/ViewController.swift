@@ -36,10 +36,16 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var session : AVCaptureSession?
     
     var camCovered = false
+    var lapsing = false;
     
     let MAX_LUMA_MEAN = Double(100)
     let MIN_LUMA_MEAN = Double(60)
     let MAX_LUMA_STD_DEV = Double(20)
+    
+    var stateQueue : YChannelStateQueue?
+    var heartRates : [Int]?
+    var observation : [Int]?
+
     
     func displayHeart(imageName: String) {
         heartView = UIImageView(frame: CGRect(x: 0, y: 0, width: 170, height: 170))
@@ -55,6 +61,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     @IBOutlet var hint1: UILabel!
     @IBOutlet var hint2: UILabel!
     @IBOutlet var heartView: UIImageView!
+    @IBOutlet var heartRate: UILabel!
     
     @IBAction func start(sender: AnyObject) {
         if button.currentTitle == "START" {
@@ -68,13 +75,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             startCameraProcesses()
         }
         else {
+            heartView.removeFromSuperview()
+            displayHeart(imageName: "Heart_inactive")
+            
             // End camera processes
             session!.stopRunning()
             toggleFlashlight()
             
             timer.invalidate()
-            heartView.removeFromSuperview()
-            displayHeart(imageName: "Heart_inactive")
             button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
             button.setTitle("START", for: UIControlState.normal)
             hint1.text = "Ready to start."
@@ -86,7 +94,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     override func viewDidLoad() {
         super.viewDidLoad()
         displayHeart(imageName: "Heart_inactive")
-        // Do any additional setup after loading the view, typically from a nib.
+
+        stateQueue = YChannelStateQueue()
+        heartRates = [Int]()
+        observation = [Int]()
     }
     
     func toggleFlashlight() {
@@ -102,7 +113,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             NSLog("\(error)")
         }
     }
-
+    
     
     func startCameraProcesses() {
         captureDevice = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) as AVCaptureDevice
@@ -172,11 +183,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         detectFingerCoverage(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
         
+        if self.camCovered {
+            useCaptureOutputForHeartRateEstimation(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
+        }
         // Compute mean and standard deviation of pixel luma values
         
     }
     
-    func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) {
+    func getMeanAndStdDev(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) -> (Double, Double){
         var sum = 0
         let pixels = 1080 * bytesPerRow
         for index in 0...pixels-1 {
@@ -186,24 +200,38 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         var sqrdDiffs = 0.0
         for index in 0...pixels-1 {
-            let sqrdDiff = pow((Double(byteBuffer[index]) - mean), 2)
+            let sqrdDiff = (Double(byteBuffer[index]) - mean) * (Double(byteBuffer[index]) - mean)
             sqrdDiffs += sqrdDiff
         }
         let stdDev = sqrt((Double(sqrdDiffs)/Double(pixels)))
         
-        var covered = false
+        return (mean, stdDev);
+    }
+    
+    func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) {
         
-        if getCoverageFromBrightness(lumaMean: mean, lumaStdDev: stdDev) {
-            NSLog("Camera is covered.")
-            covered = true
-        } else {
-            NSLog("Camera is not covered.")
-        }
+        let meanAndStdDev = getMeanAndStdDev(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
+//        let meanAndStdDev = (70.0, 19.0)
         
-        DispatchQueue.main.async() {
+        let mean = meanAndStdDev.0
+        let stdDev = meanAndStdDev.1
+        
+        let covered = getCoverageFromBrightness(lumaMean: mean, lumaStdDev: stdDev)
+        
+        DispatchQueue.main.async {
             if covered != self.camCovered {
                 self.camCovered = covered
-                self.updateDisplay()
+                if !self.camCovered && !self.lapsing {
+                    self.lapsing = true;
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
+                        if !self.camCovered && self.button.currentTitle == "STOP" {
+                            self.updateDisplay()
+                        }
+                        self.lapsing = false;
+                    })
+                } else if !self.lapsing && self.button.currentTitle == "STOP" {
+                    self.updateDisplay()
+                }
             }
         }
     }
@@ -228,4 +256,138 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         timerText.text = "\(strMinutes):\(strSeconds):\(strFraction)"
     }
     
-}
+    
+    //****************** Viterbi and heart rate estimation *********************
+    
+    func viterbi(obs:Array<Int>, trans:Array<Array<Double>>, emit:Array<Array<Double>>, states: Array<Int>, initial:Array<Double>)->(Double, [Int]){
+        
+        var vit = [[Int:Double]()]
+        var path = [Int:[Int]]()
+        
+        for s in states{
+            vit[0][s] = initial[s] * emit[s][obs[0]]
+            path[s] = [s]
+        }
+        for i in 1..<obs.count{
+            vit.append([:])
+            var newPath = [Int:[Int]]()
+            
+            for state1 in states{
+                var transMax = DBL_MIN
+                var maxProb = DBL_MIN
+                var bestState:Int?
+                
+                //
+                for state2 in states{
+                    let transProb = vit[i-1][state2]! * trans[state2][state1]
+                    if transProb > transMax{
+                        transMax = transProb
+                        maxProb = transMax * emit[state1][obs[i]]
+                        vit[i][state1] = maxProb
+                        bestState = state2
+                        newPath[state1] = path[bestState!]! + [state1]
+                    }
+                }
+                
+            }
+            path = newPath
+            
+        }
+        let len = obs.count - 1
+        var bestState:Int?
+        var maxProb = DBL_MIN
+        for state in states{
+            if vit[len][state]! > maxProb{
+                maxProb = vit[len][state]!
+                bestState = state
+            }
+        }
+        
+        
+        
+        return (maxProb, path[bestState!]!)
+        
+    }
+    
+    func calculate(states:Array<Int>)->Int{
+        
+        var first2 = -1
+        var second2 = -1
+        var lastSeen2 = false
+        var additional2 = false
+        for i in 0..<states.count {
+            if (states[i] == 2 && first2 == -1) {
+                first2 = i
+                lastSeen2 = true
+            } else if (states[i] == 2 && first2 != -1 && !lastSeen2 && additional2) {
+                second2 = i
+                //                    self.heartRates!.append(Int(60.0/((Double(second2 - first2 + 1)/90.0)*3.0)))
+                DispatchQueue.main.async {
+                    self.heartRate!.text = String(describing: Int(60.0/((Double(second2 - first2 + 1)/90.0)*3.0))) + " BPM"
+                    additional2 = false
+                }
+            } else if (states[i] == 2 && first2 != -1 && !lastSeen2 && !additional2) {
+                    additional2 = true
+//                    print("first2", first2, "second2", second2)
+                    first2 = i
+                    second2 = -1
+                    lastSeen2 = true
+                } else if (states[i] != 2) {
+                lastSeen2 = false
+            }
+        }
+        
+        
+        return 0
+        
+    }
+    
+
+    
+    func useCaptureOutputForHeartRateEstimation(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) {
+        var sum = 0
+        let pixels = 1080 * bytesPerRow
+        for index in 0...pixels-1 {
+            sum += Int(byteBuffer[index])
+        }
+        stateQueue?.addValue(value: Double(sum)/Double(pixels))
+        
+        if (stateQueue?.getState() != -1) {
+            observation!.append((stateQueue?.getState())!)
+        }
+//        print("number of obs", observation!.count)
+        if (observation!.count == 90) {
+            //            let trans = [[0.6773,0.3227],[0.0842,0.9158]]
+            let trans = [[0.6794, 0.3206, 0.0, 0.0],
+                         [0.0, 0.5366, 0.4634, 0.0],
+                         [0.0, 0.0, 0.3485, 0.6516],
+                         [0.1508, 0.0, 0.0, 0.8492]]
+            //            let emit = [[0.7689,0.0061,0.1713,0.0537],
+            //                        [0.0799,0.6646,0.1136,0.1420]]
+            let emit = [[0.6884, 0.0015, 0.3002, 0.0099],
+                        [0.0, 0.7205, 0.0102, 0.2694],
+                        [0.2894, 0.3731, 0.3362, 0.0023],
+                        [0.0005, 0.8440, 0.0021, 0.1534]]
+            
+            //            let p = [0.2, 0.8]
+            let p = [0.25, 0.20, 0.10, 0.45]
+            let states = [0,1,2,3]
+            
+            // 4 obs, increasing, decreasing, local max and local min
+//            print(observation!)
+//            print(viterbi(obs:observation!, trans:trans, emit:emit, states:states, initial:p))
+//            print(calculate(states: viterbi(obs:observation!, trans:trans, emit:emit, states:states, initial:p).1))
+//            print(heartRates!)
+            //            setLabelText(text: String(calculate(states: viterbi(obs:observation!, trans:trans, emit:emit, states:states, initial:p).1)))
+            self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1)
+//            print("Heart rates", self.heartRates!)
+
+            observation!.removeAll()
+        }
+        
+    }
+    }
+
+
+
+
