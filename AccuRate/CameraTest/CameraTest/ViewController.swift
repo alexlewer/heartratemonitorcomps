@@ -69,13 +69,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             startCameraProcesses()
         }
         else {
+            heartView.removeFromSuperview()
+            displayHeart(imageName: "Heart_inactive")
+            
             // End camera processes
             session!.stopRunning()
             toggleFlashlight()
             
             timer.invalidate()
-            heartView.removeFromSuperview()
-            displayHeart(imageName: "Heart_inactive")
             button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
             button.setTitle("START", for: UIControlState.normal)
             hint1.text = "Ready to start."
@@ -210,12 +211,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 if !self.camCovered && !self.lapsing {
                     self.lapsing = true;
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
-                        if !self.camCovered {
+                        if !self.camCovered && self.button.currentTitle == "STOP" {
                             self.updateDisplay()
                         }
                         self.lapsing = false;
                     })
-                } else if !self.lapsing {
+                } else if !self.lapsing && self.button.currentTitle == "STOP" {
                     self.updateDisplay()
                 }
             }
