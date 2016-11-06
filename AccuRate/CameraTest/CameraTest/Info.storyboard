@@ -7,6 +7,7 @@
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11524"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="Constraints with non-1.0 multipliers" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -31,24 +32,15 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="Logo" translatesAutoresizingMaskIntoConstraints="NO" id="Yap-PK-EyI">
-                                <rect key="frame" x="107" y="99" width="200" height="200"/>
+                                <rect key="frame" x="107" y="120.66666666666669" width="200" height="200"/>
                             </imageView>
                             <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="Name" translatesAutoresizingMaskIntoConstraints="NO" id="sWI-0Z-eRg">
-                                <rect key="frame" x="117" y="307" width="180" height="55"/>
+                                <rect key="frame" x="117" y="325.66666666666669" width="180" height="55"/>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Aidan Holloway-Bidwell, Lucy Lu, Grant Terrien, Renzhi Wu" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="45T-G8-sMj">
-                                <rect key="frame" x="41" y="523" width="332" height="21"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="21" id="NZX-WV-F4q"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.098039217289999994" green="0.098039217289999994" blue="0.098039217289999994" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="QNz-uD-UoC">
                                 <rect key="frame" x="10" y="30" width="33" height="33"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="33" id="efq-Qc-Hws"/>
+                                    <constraint firstAttribute="width" constant="33" id="oFs-Qw-ziK"/>
                                 </constraints>
                                 <state key="normal" title="Button" image="Back"/>
                                 <connections>
@@ -56,35 +48,36 @@
                                 </connections>
                             </button>
                             <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="Carleton" translatesAutoresizingMaskIntoConstraints="NO" id="h24-7Y-0bF">
-                                <rect key="frame" x="107" y="592" width="200" height="54"/>
+                                <rect key="frame" x="107" y="635.33333333333337" width="200" height="54"/>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Senior Comprehensive, Class of 2017" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="AQc-bV-AoP">
-                                <rect key="frame" x="101" y="552" width="212" height="21"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="21" id="abT-Cy-RAK"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.098039217289999994" green="0.098039217289999994" blue="0.098039217289999994" alpha="1" colorSpace="calibratedRGB"/>
+                                <rect key="frame" x="117" y="597.66666666666663" width="180" height="12"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="10"/>
+                                <color key="textColor" red="0.29803922770000002" green="0.29803922770000002" blue="0.29803922770000002" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Aidan Holloway-Bidwell, Lucy Lu, Grant Terrien, Renzhi Wu" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="45T-G8-sMj">
+                                <rect key="frame" x="65.666666666666686" y="577.66666666666663" width="283" height="12"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="10"/>
+                                <color key="textColor" red="0.29803922770000002" green="0.29803922770000002" blue="0.29803922770000002" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
                         <constraints>
-                            <constraint firstItem="AQc-bV-AoP" firstAttribute="top" secondItem="45T-G8-sMj" secondAttribute="bottom" constant="8" symbolic="YES" id="0U5-dz-2pF"/>
-                            <constraint firstItem="sWI-0Z-eRg" firstAttribute="top" secondItem="Yap-PK-EyI" secondAttribute="bottom" constant="8" symbolic="YES" id="2Tv-xY-fPe"/>
-                            <constraint firstItem="Yap-PK-EyI" firstAttribute="top" secondItem="C5t-v2-F0G" secondAttribute="bottom" constant="79" id="2l4-CA-dlM"/>
-                            <constraint firstItem="QNz-uD-UoC" firstAttribute="leading" secondItem="Ofd-tg-J7p" secondAttribute="leadingMargin" constant="-10" id="3ar-H3-oks"/>
-                            <constraint firstItem="45T-G8-sMj" firstAttribute="centerX" secondItem="AQc-bV-AoP" secondAttribute="centerX" id="3nz-qA-WzS"/>
-                            <constraint firstItem="AQc-bV-AoP" firstAttribute="centerX" secondItem="h24-7Y-0bF" secondAttribute="centerX" id="6Dy-Z2-PGZ"/>
-                            <constraint firstItem="sWI-0Z-eRg" firstAttribute="centerX" secondItem="45T-G8-sMj" secondAttribute="centerX" id="9Wd-h2-Qze"/>
-                            <constraint firstItem="Yap-PK-EyI" firstAttribute="centerX" secondItem="Ofd-tg-J7p" secondAttribute="centerX" id="BC1-pi-oCU"/>
-                            <constraint firstItem="h24-7Y-0bF" firstAttribute="top" secondItem="AQc-bV-AoP" secondAttribute="bottom" constant="19" id="IX8-76-h57"/>
-                            <constraint firstItem="QNz-uD-UoC" firstAttribute="top" secondItem="C5t-v2-F0G" secondAttribute="bottom" constant="10" id="MRc-rq-sBs"/>
-                            <constraint firstItem="AQc-bV-AoP" firstAttribute="leading" secondItem="Ofd-tg-J7p" secondAttribute="leadingMargin" constant="81" id="PYO-8U-GHX"/>
-                            <constraint firstItem="Yap-PK-EyI" firstAttribute="leading" secondItem="h24-7Y-0bF" secondAttribute="leading" id="Y88-Mq-1OT"/>
-                            <constraint firstItem="Yap-PK-EyI" firstAttribute="trailing" secondItem="h24-7Y-0bF" secondAttribute="trailing" id="ffJ-RJ-tAm"/>
-                            <constraint firstItem="Q5D-Tg-aCN" firstAttribute="top" secondItem="h24-7Y-0bF" secondAttribute="bottom" constant="90" id="fkz-py-CAi"/>
+                            <constraint firstItem="Yap-PK-EyI" firstAttribute="centerX" secondItem="Ofd-tg-J7p" secondAttribute="centerX" id="6wO-JW-vrA"/>
+                            <constraint firstItem="h24-7Y-0bF" firstAttribute="centerX" secondItem="Ofd-tg-J7p" secondAttribute="centerX" id="Hrc-gD-sBe"/>
+                            <constraint firstItem="AQc-bV-AoP" firstAttribute="centerY" secondItem="Ofd-tg-J7p" secondAttribute="centerY" multiplier="1.64" id="Peg-dE-dFK"/>
+                            <constraint firstItem="sWI-0Z-eRg" firstAttribute="top" secondItem="Yap-PK-EyI" secondAttribute="bottom" constant="5" id="UKk-tq-4Oy"/>
+                            <constraint firstItem="45T-G8-sMj" firstAttribute="centerX" secondItem="Ofd-tg-J7p" secondAttribute="centerX" id="XCr-MZ-efr"/>
+                            <constraint firstItem="AQc-bV-AoP" firstAttribute="top" secondItem="45T-G8-sMj" secondAttribute="top" constant="20" id="YZ2-gv-OYD"/>
+                            <constraint firstItem="QNz-uD-UoC" firstAttribute="leading" secondItem="Ofd-tg-J7p" secondAttribute="leadingMargin" multiplier="0.5" id="aAe-8k-ERc"/>
+                            <constraint firstItem="sWI-0Z-eRg" firstAttribute="centerX" secondItem="Ofd-tg-J7p" secondAttribute="centerX" id="ajI-X8-g9x"/>
+                            <constraint firstItem="AQc-bV-AoP" firstAttribute="centerX" secondItem="Ofd-tg-J7p" secondAttribute="centerX" id="dZk-ZZ-mGq"/>
+                            <constraint firstItem="QNz-uD-UoC" firstAttribute="top" secondItem="C5t-v2-F0G" secondAttribute="bottom" multiplier="1.5" id="jPG-Bd-fie"/>
+                            <constraint firstItem="h24-7Y-0bF" firstAttribute="centerY" secondItem="Ofd-tg-J7p" secondAttribute="centerY" multiplier="1.8" id="mDy-20-Wm4"/>
+                            <constraint firstItem="Yap-PK-EyI" firstAttribute="centerY" secondItem="Ofd-tg-J7p" secondAttribute="centerY" multiplier="0.6" id="mjp-2v-Ql0"/>
                         </constraints>
                         <connections>
                             <outletCollection property="gestureRecognizers" destination="HXY-F6-2gG" appends="YES" id="kku-Rw-Mnt"/>
@@ -98,7 +91,7 @@
                     </connections>
                 </swipeGestureRecognizer>
             </objects>
-            <point key="canvasLocation" x="-183.19999999999999" y="-111.0944527736132"/>
+            <point key="canvasLocation" x="-184.05797101449278" y="-111.68478260869566"/>
         </scene>
     </scenes>
     <resources>
