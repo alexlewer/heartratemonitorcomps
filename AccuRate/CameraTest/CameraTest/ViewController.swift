@@ -20,10 +20,11 @@ public extension UIView {
 class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
     
     var timer = Timer()
+    
     func pulse(imageView: UIImageView, interval: Double) {
         let intv = DispatchTime.now() + interval
         DispatchQueue.main.asyncAfter(deadline: intv) {
-            imageView.alpha = 0.7
+            imageView.alpha = 0.5
             imageView.fadeIn()
             self.pulse(imageView: imageView, interval: interval)
         }
@@ -41,20 +42,29 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     let MAX_LUMA_STD_DEV = Double(20)
     
     func displayHeart(imageName: String) {
-        heartView = UIImageView(frame: CGRect(x: 121, y: 181, width: 170, height: 170))
-        heartView.image = UIImage(named: imageName)
+        heartView = UIImageView(frame: CGRect(x: 0, y: 0, width: 170, height: 170))
         self.view.addSubview(heartView)
+        heartView.translatesAutoresizingMaskIntoConstraints = false
+        heartView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        heartView.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
+        heartView.image = UIImage(named: imageName)
     }
     
     @IBOutlet var timerText: UILabel!
-    @IBOutlet var buttonText: UIButton!
+    @IBOutlet var button: UIButton!
     @IBOutlet var hint1: UILabel!
     @IBOutlet var hint2: UILabel!
     @IBOutlet var heartView: UIImageView!
     
     @IBAction func start(sender: AnyObject) {
-        if buttonText.currentTitle == "Start" {
-            buttonText.setTitle("Stop", for: UIControlState.normal)
+        if button.currentTitle == "START" {
+            heartView.image = UIImage(named: "Heart_normal")
+            heartView.alpha = 0.25
+            heartView.fadeIn()
+            button.setBackgroundImage(UIImage(named: "Button_stop"), for: UIControlState.normal)
+            button.setTitle("STOP", for: UIControlState.normal)
+            hint1.text = "Waiting for signal."
+            hint2.text = "Please cover the camera with your finger."
             startCameraProcesses()
         }
         else {
@@ -65,9 +75,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             timer.invalidate()
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_inactive")
-            buttonText.setTitle("Start", for: UIControlState.normal)
-            hint1.text = "Waiting for signal."
-            hint2.text = "Please cover the camera by your finger."
+            button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
+            button.setTitle("START", for: UIControlState.normal)
+            hint1.text = "Ready to start."
+            hint2.text = "Please hit the START button."
             timerText.text = "00:00:00"
         }
     }
@@ -121,7 +132,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     func updateDisplay() {
         if self.camCovered {
-            heartView.image = UIImage(named: "Heart_normal")
             hint1.text = "Signal detected!"
             hint2.text = "Please do not remove your finger from the camera."
             let aSelector : Selector = #selector(ViewController.updateTime)
@@ -132,7 +142,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         else {
             timer.invalidate()
             heartView.removeFromSuperview()
-            displayHeart(imageName: "Heart_inactive")
+            displayHeart(imageName: "Heart_normal")
             hint1.text = "Waiting for signal."
             hint2.text = "Please cover the camera with your finger."
             timerText.text = "00:00:00"
@@ -184,10 +194,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         var covered = false
         
         if getCoverageFromBrightness(lumaMean: mean, lumaStdDev: stdDev) {
-            NSLog("Camera is covered")
+            NSLog("Camera is covered.")
             covered = true
         } else {
-            NSLog("Camera is not covered")
+            NSLog("Camera is not covered.")
         }
         
         DispatchQueue.main.async() {
