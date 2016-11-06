@@ -35,6 +35,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var session : AVCaptureSession?
     
     var camCovered = false
+    var lapsing = false;
     
     let MAX_LUMA_MEAN = Double(100)
     let MIN_LUMA_MEAN = Double(60)
@@ -91,7 +92,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             NSLog("\(error)")
         }
     }
-
+    
     
     func startCameraProcesses() {
         captureDevice = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) as AVCaptureDevice
@@ -166,7 +167,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
     }
     
-    func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) {
+    func getMeanAndStdDev(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) -> (Double, Double){
         var sum = 0
         let pixels = 1080 * bytesPerRow
         for index in 0...pixels-1 {
@@ -181,19 +182,36 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
         let stdDev = sqrt((Double(sqrdDiffs)/Double(pixels)))
         
+        return (mean, stdDev);
+    }
+    
+    func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) {
+        
+        let meanAndStdDev = getMeanAndStdDev(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
+        
+        let mean = meanAndStdDev.0
+        let stdDev = meanAndStdDev.1
+        
         var covered = false
         
         if getCoverageFromBrightness(lumaMean: mean, lumaStdDev: stdDev) {
-            NSLog("Camera is covered")
             covered = true
-        } else {
-            NSLog("Camera is not covered")
         }
         
-        DispatchQueue.main.async() {
+        DispatchQueue.main.async {
             if covered != self.camCovered {
                 self.camCovered = covered
-                self.updateDisplay()
+                if !self.camCovered && !self.lapsing {
+                    self.lapsing = true;
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
+                        if !self.camCovered {
+                            self.updateDisplay()
+                        }
+                        self.lapsing = false;
+                    })
+                } else if !self.lapsing {
+                    self.updateDisplay()
+                }
             }
         }
     }
