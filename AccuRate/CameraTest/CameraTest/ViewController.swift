@@ -348,9 +348,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 canPlaceFirstMark = false
             } else if (states[i]==0 && previous == 3){
                 secondMark = i
-                print("rate",Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since)))
+                BPMNumber = Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since))
                 DispatchQueue.main.async {
-                    BPMNumber = Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since))
                     self.BPMText.text = String(BPMNumber) + " BPM"
                     if BPMNumber > 100 {
                         self.BPMText.frame.size.width = 190
