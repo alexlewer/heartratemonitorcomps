@@ -56,6 +56,7 @@
                                 <rect key="frame" x="8" y="30" width="33" height="33"/>
                                 <state key="normal" image="Info"/>
                                 <connections>
+                                    <action selector="goInfo:" destination="BYZ-38-t0r" eventType="touchUpInside" id="fsL-Ql-bxn"/>
                                     <segue destination="FxN-uX-pBy" kind="presentation" modalTransitionStyle="flipHorizontal" id="tt4-c5-Bkg"/>
                                 </connections>
                             </button>

@@ -64,6 +64,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     @IBOutlet var heartView: UIImageView!
     @IBOutlet var BPMText: UILabel!
     
+    @IBAction func goInfo(_ sender: Any) {
+        if button.currentTitle == "STOP" {
+            session!.stopRunning()
+            toggleFlashlight()
+        }
+    }
+    
     @IBAction func start(sender: AnyObject) {
         if button.currentTitle == "START" {
             heartView.image = UIImage(named: "Heart_normal")
