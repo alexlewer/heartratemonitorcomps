@@ -181,10 +181,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
         let byteBuffer = UnsafeMutablePointer<UInt8>(pointer)!
         
-        detectFingerCoverage(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
+        let mean = detectFingerCoverage(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
         
         if self.camCovered {
-            useCaptureOutputForHeartRateEstimation(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
+            useCaptureOutputForHeartRateEstimation(mean: mean, bytesPerRow: bytesPerRow)
         }
         // Compute mean and standard deviation of pixel luma values
         
@@ -208,10 +208,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         return (mean, stdDev);
     }
     
-    func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) {
+    func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) -> Double {
         
         let meanAndStdDev = getMeanAndStdDev(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
-//        let meanAndStdDev = (70.0, 19.0)
         
         let mean = meanAndStdDev.0
         let stdDev = meanAndStdDev.1
@@ -234,6 +233,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 }
             }
         }
+        return mean
     }
     
     func updateTime() {
@@ -342,15 +342,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
     }
     
-
-    
-    func useCaptureOutputForHeartRateEstimation(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) {
-        var sum = 0
+    func useCaptureOutputForHeartRateEstimation(mean: Double, bytesPerRow: Int) {
         let pixels = 1080 * bytesPerRow
-        for index in 0...pixels-1 {
-            sum += Int(byteBuffer[index])
-        }
-        stateQueue?.addValue(value: Double(sum)/Double(pixels))
+        
+        stateQueue?.addValue(value: mean/Double(pixels))
         
         if (stateQueue?.getState() != -1) {
             observation!.append((stateQueue?.getState())!)
