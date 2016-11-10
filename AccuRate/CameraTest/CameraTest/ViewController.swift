@@ -45,6 +45,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var stateQueue : YChannelStateQueue?
     var heartRates : [Int]?
     var observation : [Int]?
+    var lastCalculated : Date?
     
     
     func displayHeart(imageName: String) {
@@ -305,7 +306,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
     }
     
-    func calculate(states:Array<Int>){
+    func calculate(states:Array<Int>, since: Double){
         var first2 = -1
         var second2 = -1
         var lastSeen2 = false
@@ -318,7 +319,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 second2 = i
                 // Update UI here... Maybe should happen later?
                 DispatchQueue.main.async {
-                    self.heartRate!.text = String(describing: Int(60.0/((Double(second2 - first2 + 1)/90.0)*3.0))) + " BPM"
+                    self.heartRate!.text = String(describing: Int(60.0/((Double(second2 - first2 + 1)/Double(states.count))*since))) + " BPM"
                     additional2 = false
                 }
             } else if (states[i] == 2 && first2 != -1 && !lastSeen2 && !additional2) {
@@ -335,10 +336,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     func useCaptureOutputForHeartRateEstimation(mean: Double, bytesPerRow: Int) {
         let pixels = 1080 * bytesPerRow
         stateQueue?.addValue(value: mean/Double(pixels))
+        if (observation!.count == 0) {
+            self.lastCalculated = Date()
+        }
         if (stateQueue?.getState() != -1) {
             observation!.append((stateQueue?.getState())!)
         }
-        if (observation!.count == 90) {
+//        if (observation!.count == 90) {
+        let since = Date().timeIntervalSince(self.lastCalculated!)
+        if (since >= 3.0) {
             //        *** 2 state matrices -- leave in for later use
             //            let trans = [[0.6773,0.3227],[0.0842,0.9158]]
             //            let emit = [[0.7689,0.0061,0.1713,0.0537],
@@ -355,7 +361,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         [0.0005, 0.8440, 0.0021, 0.1534]]
             let p = [0.25, 0.20, 0.10, 0.45]
             let states = [0,1,2,3]
-            self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1)
+            self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1, since: since)
             observation!.removeAll()
         }
     }
