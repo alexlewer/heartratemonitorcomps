@@ -62,7 +62,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     @IBOutlet var hint1: UILabel!
     @IBOutlet var hint2: UILabel!
     @IBOutlet var heartView: UIImageView!
-    @IBOutlet var heartRate: UILabel!
+    @IBOutlet var BPMText: UILabel!
     
     @IBAction func start(sender: AnyObject) {
         if button.currentTitle == "START" {
@@ -89,6 +89,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             hint1.text = "Ready to start."
             hint2.text = "Please hit the START button."
             timerText.text = "00:00:00"
+            BPMText.frame.size.width = 175
+            BPMText.text = "- - - BPM"
         }
     }
     
@@ -149,7 +151,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             let aSelector : Selector = #selector(ViewController.updateTime)
             timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: aSelector, userInfo: nil, repeats: true)
             startTime = NSDate.timeIntervalSinceReferenceDate
-            pulse(imageView: self.heartView, interval: 1.5)
         }
         else {
             timer.invalidate()
@@ -158,6 +159,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             hint1.text = "Waiting for signal."
             hint2.text = "Please cover the camera with your finger."
             timerText.text = "00:00:00"
+            BPMText.frame.size.width = 175
+            BPMText.text = "- - - BPM"
         }
     }
     
@@ -311,6 +314,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         var second2 = -1
         var lastSeen2 = false
         var additional2 = false
+        var BPMNumber = 0
         for i in 0..<states.count {
             if (states[i] == 2 && first2 == -1) {
                 first2 = i
@@ -319,7 +323,20 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 second2 = i
                 // Update UI here... Maybe should happen later?
                 DispatchQueue.main.async {
-                    self.heartRate!.text = String(describing: Int(60.0/((Double(second2 - first2 + 1)/Double(states.count))*since))) + " BPM"
+                    BPMNumber = Int(60.0/((Double(second2 - first2 + 1)/Double(states.count))*since)/0.5)
+                    self.BPMText!.text = String(BPMNumber) + " BPM"
+                    if BPMNumber > 100 {
+                        self.BPMText.frame.size.width = 190
+                        self.heartView.removeFromSuperview()
+                        self.displayHeart(imageName: "Heart_normal")
+                        self.pulse(imageView: self.heartView, interval: 0.5)
+                    }
+                    else {
+                        self.BPMText.frame.size.width = 160
+                        self.heartView.removeFromSuperview()
+                        self.displayHeart(imageName: "Heart_normal")
+                        self.pulse(imageView: self.heartView, interval: 1)
+                    }
                     additional2 = false
                 }
             } else if (states[i] == 2 && first2 != -1 && !lastSeen2 && !additional2) {
@@ -366,7 +383,3 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
     }
 }
-
-
-
-
