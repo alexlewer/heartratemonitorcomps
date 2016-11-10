@@ -310,45 +310,54 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     }
     
     func calculate(states:Array<Int>, since: Double){
-        var first2 = -1
-        var second2 = -1
-        var lastSeen2 = false
-        var additional2 = false
-        var BPMNumber = 0
-        for i in 0..<states.count {
-            if (states[i] == 2 && first2 == -1) {
-                first2 = i
-                lastSeen2 = true
-            } else if (states[i] == 2 && first2 != -1 && !lastSeen2 && additional2) {
-                second2 = i
-                // Update UI here... Maybe should happen later?
+        var previous = states[0]
+        var firstMark = -1
+        var secondMark = -1
+        var canPlaceFirstMark = true
+
+//        var first2 = -1
+//        var second2 = -1
+//        var lastSeen2 = false
+//        var additional2 = false
+//        for i in 0..<states.count {
+//            if (states[i] == 2 && first2 == -1) {
+//                first2 = i
+//                lastSeen2 = true
+//            } else if (states[i] == 2 && first2 != -1 && !lastSeen2 && additional2) {
+//                second2 = i
+//                // Update UI here... Maybe should happen later?
+//                DispatchQueue.main.async {
+//                    self.heartRate!.text = String(describing: Int(60.0/((Double(second2 - first2 + 1)/Double(states.count))*since))) + " BPM"
+//                    additional2 = false
+//                }
+//            } else if (states[i] == 2 && first2 != -1 && !lastSeen2 && !additional2) {
+//                additional2 = true
+//                first2 = i
+//                second2 = -1
+//                lastSeen2 = true
+//            } else if (states[i] != 2) {
+//                lastSeen2 = false
+//            }
+//        }
+        print("states",states)
+        for i in 0..<states.count{
+            print("previous",previous, "current",states[i])
+            if (states[i]==0 && canPlaceFirstMark && previous == 3) {
+                firstMark = i
+                canPlaceFirstMark = false
+            } else if (states[i]==0 && previous == 3){
+                secondMark = i
+                print("rate",Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since)))
                 DispatchQueue.main.async {
-                    BPMNumber = Int(60.0/((Double(second2 - first2 + 1)/Double(states.count))*since)/0.5)
-                    self.BPMText!.text = String(BPMNumber) + " BPM"
-                    if BPMNumber > 100 {
-                        self.BPMText.frame.size.width = 190
-                        self.heartView.removeFromSuperview()
-                        self.displayHeart(imageName: "Heart_normal")
-                        self.pulse(imageView: self.heartView, interval: 0.5)
-                    }
-                    else {
-                        self.BPMText.frame.size.width = 160
-                        self.heartView.removeFromSuperview()
-                        self.displayHeart(imageName: "Heart_normal")
-                        self.pulse(imageView: self.heartView, interval: 1)
-                    }
-                    additional2 = false
+                    self.heartRate!.text = String(describing: Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since))) + " BPM"
                 }
-            } else if (states[i] == 2 && first2 != -1 && !lastSeen2 && !additional2) {
-                additional2 = true
-                first2 = i
-                second2 = -1
-                lastSeen2 = true
-            } else if (states[i] != 2) {
-                lastSeen2 = false
+                firstMark = i
+                secondMark = -1
             }
+            previous = states[i]
         }
     }
+
     
     func useCaptureOutputForHeartRateEstimation(mean: Double, bytesPerRow: Int) {
         let pixels = 1080 * bytesPerRow
