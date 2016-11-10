@@ -314,6 +314,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         var firstMark = -1
         var secondMark = -1
         var canPlaceFirstMark = true
+        var BPMNumber = 0
 
 //        var first2 = -1
 //        var second2 = -1
@@ -349,7 +350,20 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 secondMark = i
                 print("rate",Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since)))
                 DispatchQueue.main.async {
-                    self.heartRate!.text = String(describing: Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since))) + " BPM"
+                    BPMNumber = Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since))
+                    self.BPMText.text = String(BPMNumber) + " BPM"
+                    if BPMNumber > 100 {
+                        self.BPMText.frame.size.width = 190
+                        self.heartView.removeFromSuperview()
+                        self.displayHeart(imageName: "Heart_normal")
+                        self.pulse(imageView: self.heartView, interval: 0.5)
+                    }
+                    else {
+                        self.BPMText.frame.size.width = 160
+                        self.heartView.removeFromSuperview()
+                        self.displayHeart(imageName: "Heart_normal")
+                        self.pulse(imageView: self.heartView, interval: 1)
+                    }
                 }
                 firstMark = i
                 secondMark = -1
