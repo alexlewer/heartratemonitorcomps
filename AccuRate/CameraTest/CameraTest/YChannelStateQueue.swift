@@ -28,16 +28,16 @@ class YChannelStateQueue: NSObject {
         if valuesArray!.count < 3 {
             return -1 // not enough measurements yet
         }
-        if valuesArray![0] < valuesArray![1] && valuesArray![1] < valuesArray![2] {
+        if valuesArray![0] >= valuesArray![1] && valuesArray![1] >= valuesArray![2] {
             return 0; // rising
         }
-        if valuesArray![0] > valuesArray![1] && valuesArray![1] > valuesArray![2] {
+        if valuesArray![0] <= valuesArray![1] && valuesArray![1] <= valuesArray![2] {
             return 1; //falling
         }
-        if valuesArray![0] > valuesArray![1] && valuesArray![1] < valuesArray![2] {
+        if valuesArray![0] <= valuesArray![1] && valuesArray![1] >= valuesArray![2] {
             return 2; // local minimum
         }
-        if valuesArray![0] < valuesArray![1] && valuesArray![1] > valuesArray![2] {
+        if valuesArray![0] >= valuesArray![1] && valuesArray![1] <= valuesArray![2] {
             return 3; // local maximum
         }
         
