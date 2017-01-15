@@ -45,6 +45,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var stateQueue : YChannelStateQueue?
     var heartRates : [Int]?
     var observation : [Int]?
+    
+    var obsTime : [Double]?
+    var beginningTime : Double?
+    var stateCount : Int?
+    
     var lastCalculated : Date?
     
     var previousBPM: Int?
@@ -110,6 +115,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         stateQueue = YChannelStateQueue()
         heartRates = [Int]()
         observation = [Int]()
+        obsTime = [Double]()
     }
     
     func toggleFlashlight() {
@@ -320,87 +326,105 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     func calculate(states:Array<Int>, since: Double){
         var previous = states[0]
-        var firstMark = -1
-        var secondMark = -1
-        var canPlaceFirstMark = true
         var BPMNumber = 0
         var tempBPM = 0
         previousBPM = 0
-
-//        var first2 = -1
-//        var second2 = -1
-//        var lastSeen2 = false
-//        var additional2 = false
-//        for i in 0..<states.count {
-//            if (states[i] == 2 && first2 == -1) {
-//                first2 = i
-//                lastSeen2 = true
-//            } else if (states[i] == 2 && first2 != -1 && !lastSeen2 && additional2) {
-//                second2 = i
-//                // Update UI here... Maybe should happen later?
-//                DispatchQueue.main.async {
-//                    self.heartRate!.text = String(describing: Int(60.0/((Double(second2 - first2 + 1)/Double(states.count))*since))) + " BPM"
-//                    additional2 = false
-//                }
-//            } else if (states[i] == 2 && first2 != -1 && !lastSeen2 && !additional2) {
-//                additional2 = true
-//                first2 = i
-//                second2 = -1
-//                lastSeen2 = true
-//            } else if (states[i] != 2) {
-//                lastSeen2 = false
-//            }
-//        }
-        print("states",states)
+        print("obstime", obsTime!)
+        
         for i in 0..<states.count{
-            print("previous",previous, "current",states[i])
-            if (states[i]==0 && canPlaceFirstMark && previous == 3) {
-                firstMark = i
-                canPlaceFirstMark = false
-            } else if (states[i]==0 && previous == 3){
-                secondMark = i
-                BPMNumber = Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since))
-                if (previousBPM != 0){
-                    tempBPM = (BPMNumber + previousBPM!)/2
-                } else {
-                    tempBPM = BPMNumber
+            
+            if (states[i]==0 && previous == 3) {
+                if beginningTime != nil {
+                    var interval = (obsTime?[i])! - beginningTime!
+                    print("interval", interval)
+                    BPMNumber = Int(60 / interval)
+                    if (previousBPM != 0){
+                        tempBPM = (BPMNumber + previousBPM!)/2
+                    } else {
+                        tempBPM = BPMNumber
+                    }
+    
+    //                print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
+                    previousBPM = BPMNumber
+                    BPMNumber = tempBPM
+                    DispatchQueue.main.async {
+                        self.BPMText.text = String(BPMNumber) + " BPM"
+                        if BPMNumber > 100 {
+                            self.BPMText.frame.size.width = 190
+                            self.heartView.removeFromSuperview()
+                            self.displayHeart(imageName: "Heart_normal")
+                            self.pulse(imageView: self.heartView, interval: 0.5)
+                        }
+                        else {
+                            self.BPMText.frame.size.width = 160
+                            self.heartView.removeFromSuperview()
+                            self.displayHeart(imageName: "Heart_normal")
+                            self.pulse(imageView: self.heartView, interval: 1)
+                        }
+                    }
+                    
                 }
                 
-                print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
-                previousBPM = BPMNumber
-                BPMNumber = tempBPM
-                DispatchQueue.main.async {
-                    self.BPMText.text = String(BPMNumber) + " BPM"
-                    if BPMNumber > 100 {
-                        self.BPMText.frame.size.width = 190
-                        self.heartView.removeFromSuperview()
-                        self.displayHeart(imageName: "Heart_normal")
-                        self.pulse(imageView: self.heartView, interval: 0.5)
-                    }
-                    else {
-                        self.BPMText.frame.size.width = 160
-                        self.heartView.removeFromSuperview()
-                        self.displayHeart(imageName: "Heart_normal")
-                        self.pulse(imageView: self.heartView, interval: 1)
-                    }
-                }
-                firstMark = i
-                secondMark = -1
+                beginningTime = obsTime?[i]
+            
             }
             previous = states[i]
+            
         }
+
+//        print("states",states)
+//        for i in 0..<states.count{
+//            print("previous",previous, "current",states[i])
+//            if (states[i]==0 && canPlaceFirstMark && previous == 3) {
+//                firstMark = i
+//                canPlaceFirstMark = false
+//            } else if (states[i]==0 && previous == 3){
+//                secondMark = i
+//                BPMNumber = Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since))
+//                if (previousBPM != 0){
+//                    tempBPM = (BPMNumber + previousBPM!)/2
+//                } else {
+//                    tempBPM = BPMNumber
+//                }
+//                
+////                print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
+//                previousBPM = BPMNumber
+//                BPMNumber = tempBPM
+//                DispatchQueue.main.async {
+//                    self.BPMText.text = String(BPMNumber) + " BPM"
+//                    if BPMNumber > 100 {
+//                        self.BPMText.frame.size.width = 190
+//                        self.heartView.removeFromSuperview()
+//                        self.displayHeart(imageName: "Heart_normal")
+//                        self.pulse(imageView: self.heartView, interval: 0.5)
+//                    }
+//                    else {
+//                        self.BPMText.frame.size.width = 160
+//                        self.heartView.removeFromSuperview()
+//                        self.displayHeart(imageName: "Heart_normal")
+//                        self.pulse(imageView: self.heartView, interval: 1)
+//                    }
+//                }
+//                firstMark = i
+//                secondMark = -1
+//            }
+//            previous = states[i]
+//        }
     }
 
     
     func useCaptureOutputForHeartRateEstimation(mean: Double, bytesPerRow: Int) {
+        stateCount = 0
         let pixels = 1080 * bytesPerRow
         stateQueue?.addValue(value: mean/Double(pixels))
         if (observation!.count == 0) {
             self.lastCalculated = Date()
         }
         if (stateQueue?.getState() != -1) {
+            obsTime!.append(NSDate().timeIntervalSince1970)
             observation!.append((stateQueue?.getState())!)
         }
+        print("obstime",obsTime!)
 //        if (observation!.count == 90) {
         let since = Date().timeIntervalSince(self.lastCalculated!)
         if (since >= 3.0) {
@@ -423,6 +447,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             
             self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1, since: since)
             observation!.removeAll()
+            obsTime!.removeAll()
         }
     }
 }
