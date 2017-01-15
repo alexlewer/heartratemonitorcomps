@@ -47,6 +47,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var observation : [Int]?
     var lastCalculated : Date?
     
+    var previousBPM: Int?
+    
     
     func displayHeart(imageName: String) {
         heartView = UIImageView(frame: CGRect(x: 0, y: 0, width: 170, height: 170))
@@ -322,6 +324,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         var secondMark = -1
         var canPlaceFirstMark = true
         var BPMNumber = 0
+        var tempBPM = 0
+        previousBPM = 0
 
 //        var first2 = -1
 //        var second2 = -1
@@ -356,6 +360,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             } else if (states[i]==0 && previous == 3){
                 secondMark = i
                 BPMNumber = Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since))
+                if (previousBPM != 0){
+                    tempBPM = (BPMNumber + previousBPM!)/2
+                } else {
+                    tempBPM = BPMNumber
+                }
+                
+                print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
+                previousBPM = BPMNumber
+                BPMNumber = tempBPM
                 DispatchQueue.main.async {
                     self.BPMText.text = String(BPMNumber) + " BPM"
                     if BPMNumber > 100 {
@@ -407,6 +420,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         [0.0005, 0.8440, 0.0021, 0.1534]]
             let p = [0.25, 0.20, 0.10, 0.45]
             let states = [0,1,2,3]
+            
             self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1, since: since)
             observation!.removeAll()
         }
