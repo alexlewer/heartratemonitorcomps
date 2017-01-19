@@ -13,15 +13,12 @@ def fb_alg(trans, emit, observ):
     fw[:, 0] = 1.0/n
     for obs_ind in range(k):
         f_row_vec = np.matrix(fw[:,obs_ind])
-        print("vector", emit[:,observ[obs_ind]].flatten())
-        print("diagonal", np.diag(emit[:,observ[obs_ind]].flatten()))
-
-        d = np.reshape(emit[:,observ[obs_ind]].flatten(), n)
-        print("d", d)
+        #print("vector", emit[:,observ[obs_ind]])
+        #print("diagonal", np.diag(emit[:,observ[obs_ind]]))
 
         fw[:, obs_ind+1] = f_row_vec * \
                            np.matrix(trans) * \
-                           np.matrix(np.diag(emit[:,observ[obs_ind]].flatten()))
+                           np.matrix(np.diag(emit[:,observ[obs_ind]]))
         fw[:,obs_ind+1] = fw[:,obs_ind+1]/np.sum(fw[:,obs_ind+1])
     # backward part
     bw[:,-1] = 1.0
@@ -47,13 +44,13 @@ def baum_welch( trans, emit, observ ):
     O_mat = np.ones( (num_states, num_obs) )
     O_mat = O_mat / np.sum(O_mat,1)
 
-    print(trans.shape, emit.shape)
-    print(A_mat.shape, O_mat.shape)
+    #print(trans.shape, emit.shape)
+    #print(A_mat.shape, O_mat.shape)
     theta = np.zeros( (num_states, num_states, observ.size) )
 
     count = 1
     while True:
-        print("Iteration: ", count)
+        #print("Iteration: ", count)
 
         old_trans = trans
         old_emit = emit
@@ -83,7 +80,7 @@ def baum_welch( trans, emit, observ ):
                                       np.sum( P[a_ind,1:])
         emit = emit / np.sum(emit,1)
         # compare
-        if np.linalg.norm(old_trans-trans) < .00001 and np.linalg.norm(old_emit-emit) < .00001:
+        if np.linalg.norm(old_trans-trans) < .1 and np.linalg.norm(old_emit-emit) < .1:
             break
 
         count += 1
@@ -124,15 +121,20 @@ def baum_welch( trans, emit, observ ):
                 return A_mat, O_mat"""
 
 def test():
-    A = np.matrix([[0.6794, 0.3206, 0.0, 0.0], \
-        [0.0, 0.5366, 0.4634, 0.0], \
-        [0.0, 0.0, 0.3485, 0.6516], \
-        [0.1508, 0.0, 0.0, 0.8492]])
+    A = np.array([0.6794, 0.3206, 0.0, 0.0, \
+        0.0, 0.5366, 0.4634, 0.0, \
+        0.0, 0.0, 0.3485, 0.6516, \
+        0.1508, 0.0, 0.0, 0.8492])
 
-    B = np.matrix([[0.6884, 0.0015, 0.3002, 0.0099], \
-        [0.0, 0.7205, 0.0102, 0.2694], \
-        [0.2894, 0.3731, 0.3362, 0.0023], \
-        [0.0005, 0.8440, 0.0021, 0.1534]])
+    B = np.array([0.6884, 0.0015, 0.3002, 0.0099, \
+        0.0, 0.7205, 0.0102, 0.2694, \
+        0.2894, 0.3731, 0.3362, 0.0023, \
+        0.0005, 0.8440, 0.0021, 0.1534])
+
+    A = A.reshape((-1,4))
+    B = B.reshape((-1,4))
+
+    #print(A, B)
 
     O = np.array([0,3,1,2,1,0,2,3,0,1,0,2,0,1,2,2,0,3,0,0,2,0,0,1,2,0,1,2,0])
 

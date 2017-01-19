@@ -38,7 +38,7 @@ def beta(A, B, observations):
 	for obs_ind in range(T, 0, -1):
 		b_col_vec = np.matrix(bw[:,obs_ind]).transpose()
 		bw[:, obs_ind-1] = (np.matrix(A) * \
-							 np.matrix(np.diag(B[:,observ[obs_ind-1]])) * \
+							 np.matrix(np.diag(B[:,observations[obs_ind-1]])) * \
 							 b_col_vec).transpose()
 		bw[:,obs_ind-1] = bw[:,obs_ind-1]/np.sum(bw[:,obs_ind-1])
 
@@ -56,7 +56,7 @@ def xi(A, B, alpha, beta, prob_obs, observations):
 				alpha[i_ind,t_ind] * \
 				beta[j_ind,t_ind+1] * \
 				A[i_ind,j_ind] * \
-				B[j_ind, observ[t_ind]]
+				B[j_ind, observations[t_ind]]
 
 				xi[t_ind,i_ind,j_ind] = not_quite_xi / prob_obs
 
@@ -83,7 +83,7 @@ def gamma(alpha, beta, prob_obs, observations):
 
 	return gamma
 
-def b_hat(B, gamma):
+def b_hat(B, gamma, observations):
 	num_states, num_obs = B.shape
 	b_hat = np.zeros((num_states, num_obs))
 
@@ -98,42 +98,50 @@ def b_hat(B, gamma):
 def baum_welch(A, B, observations):
 	curA = A
 	curB = B
+	num_states, num_obs = B.shape
+	T = len(observations)
 
 	while True:
 		alph = alpha(curA, curB, observations)
 		bet = beta(curA, curB, observations)
 
 		prob_obs = 0
-		for k in range(num_states):
-			prob_obs += alph[k_ind, t_ind] * bet[k_ind, t_ind]
+		for t_ind in range(T):
+			for k in range(num_states):
+				prob_obs += alph[k, t_ind] * bet[k, t_ind]
 
-		xi = xi(curA, curB, alph, bet, prob_obs, observations)
+		x = xi(curA, curB, alph, bet, prob_obs, observations)
 
-		gamma = gamma(alph, bet, prob_obs, observations)
+		gam = gamma(alph, bet, prob_obs, observations)
 
 		oldA, oldB = curA, curB
 
-		curA = a_hat(xi)
-		curB = b_hat(B, gamma)
+		curA = a_hat(x)
+		curB = b_hat(B, gam, observations)
 
 
-		if np.linalg.norm(oldA - curA) < .00001 and np.linalg.norm(oldB - curB) < .00001:
+		if np.linalg.norm(oldA - curA) < .1 and np.linalg.norm(oldB - curB) < .1:
 			break
 
 	return curA, curB
 
 def test():
-	A = np.matrix([[0.6794, 0.3206, 0.0, 0.0], \
-		[0.0, 0.5366, 0.4634, 0.0], \
-		[0.0, 0.0, 0.3485, 0.6516], \
-		[0.1508, 0.0, 0.0, 0.8492]])
+	A = np.array([0.6794, 0.3206, 0.0, 0.0, \
+		0.0, 0.5366, 0.4634, 0.0, \
+		0.0, 0.0, 0.3485, 0.6516, \
+		0.1508, 0.0, 0.0, 0.8492])
 
-	B = np.matrix([[0.6884, 0.0015, 0.3002, 0.0099], \
-		[0.0, 0.7205, 0.0102, 0.2694], \
-		[0.2894, 0.3731, 0.3362, 0.0023], \
-		[0.0005, 0.8440, 0.0021, 0.1534]])
+	B = np.array([0.6884, 0.0015, 0.3002, 0.0099, \
+		0.0, 0.7205, 0.0102, 0.2694, \
+		0.2894, 0.3731, 0.3362, 0.0023, \
+		0.0005, 0.8440, 0.0021, 0.1534])
 
-	O = [0,3,1,2,1,0,2,3,0,1,0,2,0,1,2,2,0,3,0,0,2,0,0,1,2,0,1,2,0]
+	A = A.reshape((-1,4))
+	B = B.reshape((-1,4))
+
+	#print(A, B)
+
+	O = np.array([0,3,1,2,1,0,2,3,0,1,0,2,0,1,2,2,0,3,0,0,2,0,0,1,2,0,1,2,0])
 
 	print(baum_welch(A,B,O))
 
