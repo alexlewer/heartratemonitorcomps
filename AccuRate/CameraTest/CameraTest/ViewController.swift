@@ -8,6 +8,7 @@
 
 import UIKit
 import AVFoundation
+import MessageUI
 
 public extension UIView {
     func fadeIn(withDuration duration: TimeInterval = 1.0) {
@@ -17,7 +18,7 @@ public extension UIView {
     }
 }
 
-class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
+class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate, MFMailComposeViewControllerDelegate {
     
     var timer = Timer()
     
@@ -448,6 +449,36 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1, since: since)
             observation!.removeAll()
             obsTime!.removeAll()
+        }
+    }
+
+    func writeCSV(){
+        let fileName = "data.csv"
+        let path = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
+        var csvText = "Observation,State\n"
+        // What to write?
+        do {
+            try csvText.write(to: path!, atomically: true, encoding: String.Encoding.utf8)
+        } catch {
+            print("Failed to create file")
+        }
+        
+        if MFMailComposeViewController.canSendMail() {
+            let emailController = MFMailComposeViewController()
+            emailController.mailComposeDelegate = self
+            emailController.setToRecipients([])
+            emailController.setSubject("Our CSV Data")
+            emailController.setMessageBody("Please see the attachment!", isHTML: false)
+            do {
+                try emailController.addAttachmentData(Data(contentsOf: path!), mimeType: "text/csv", fileName: "data.csv")
+            } catch {
+                print("Failed to add attachment")
+            }
+            present(emailController, animated: true, completion: nil)
+        }
+        
+        func mailComposeController(controller: MFMailComposeViewController, didFinishWithResult result: MFMailComposeResult, error: NSError?) {
+            controller.dismiss(animated: true, completion: nil)
         }
     }
 }
