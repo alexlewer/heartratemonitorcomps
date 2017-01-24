@@ -336,18 +336,27 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             
             if (states[i]==0 && previous == 3) {
                 if beginningTime != nil {
-                    var interval = (obsTime?[i])! - beginningTime!
+                    let interval = (obsTime?[i])! - beginningTime!
                     print("interval", interval)
-                    BPMNumber = Int(60 / interval)
+                    if Int(60 / interval) < 300 && Int(60 / interval) > 30 { // heuristic: BPM shouldn't be less than 30 or greater than 300 because that's very unlikely
+                        BPMNumber = Int(60 / interval)
+                    }
                     if (previousBPM != 0){
-                        tempBPM = (BPMNumber + previousBPM!)/2
+                        let difference = BPMNumber - previousBPM!
+                        if difference > -5 && difference < 5 {
+                            tempBPM = (BPMNumber + previousBPM!)/2
+                        }
                     } else {
                         tempBPM = BPMNumber
                     }
-    
-    //                print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
+                    
+                    
                     previousBPM = BPMNumber
                     BPMNumber = tempBPM
+                    
+                    
+                    
+    //                print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
                     DispatchQueue.main.async {
                         self.BPMText.text = String(BPMNumber) + " BPM"
                         if BPMNumber > 100 {
@@ -372,45 +381,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             previous = states[i]
             
         }
-
-//        print("states",states)
-//        for i in 0..<states.count{
-//            print("previous",previous, "current",states[i])
-//            if (states[i]==0 && canPlaceFirstMark && previous == 3) {
-//                firstMark = i
-//                canPlaceFirstMark = false
-//            } else if (states[i]==0 && previous == 3){
-//                secondMark = i
-//                BPMNumber = Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since))
-//                if (previousBPM != 0){
-//                    tempBPM = (BPMNumber + previousBPM!)/2
-//                } else {
-//                    tempBPM = BPMNumber
-//                }
-//                
-////                print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
-//                previousBPM = BPMNumber
-//                BPMNumber = tempBPM
-//                DispatchQueue.main.async {
-//                    self.BPMText.text = String(BPMNumber) + " BPM"
-//                    if BPMNumber > 100 {
-//                        self.BPMText.frame.size.width = 190
-//                        self.heartView.removeFromSuperview()
-//                        self.displayHeart(imageName: "Heart_normal")
-//                        self.pulse(imageView: self.heartView, interval: 0.5)
-//                    }
-//                    else {
-//                        self.BPMText.frame.size.width = 160
-//                        self.heartView.removeFromSuperview()
-//                        self.displayHeart(imageName: "Heart_normal")
-//                        self.pulse(imageView: self.heartView, interval: 1)
-//                    }
-//                }
-//                firstMark = i
-//                secondMark = -1
-//            }
-//            previous = states[i]
-//        }
     }
 
     
@@ -426,7 +396,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             observation!.append((stateQueue?.getState())!)
         }
         print("obstime",obsTime!)
-//        if (observation!.count == 90) {
         let since = Date().timeIntervalSince(self.lastCalculated!)
         if (since >= 3.0) {
             //        *** 2 state matrices -- leave in for later use
