@@ -201,13 +201,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
         let byteBuffer = UnsafeMutablePointer<UInt8>(pointer)!
         
-        let mean = detectFingerCoverage(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
+        let meanAndStdDev = getMeanAndStdDev(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
+        
+        detectFingerCoverage(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer, meanAndStdDev: meanAndStdDev)
         
         if self.camCovered {
-            useCaptureOutputForHeartRateEstimation(mean: mean, bytesPerRow: bytesPerRow)
+            useCaptureOutputForHeartRateEstimation(mean: meanAndStdDev.0, bytesPerRow: bytesPerRow)
         }
-        // Compute mean and standard deviation of pixel luma values
-        
     }
     
     func getMeanAndStdDev(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) -> (Double, Double){
@@ -228,9 +228,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         return (mean, stdDev);
     }
     
-    func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) -> Double {
-        
-        let meanAndStdDev = getMeanAndStdDev(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
+    func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>, meanAndStdDev: (Double, Double)) {
         
         let mean = meanAndStdDev.0
         let stdDev = meanAndStdDev.1
@@ -253,7 +251,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 }
             }
         }
-        return mean
     }
     
     func updateTime() {
