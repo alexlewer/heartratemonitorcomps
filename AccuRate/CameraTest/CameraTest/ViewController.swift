@@ -54,7 +54,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var lastCalculated : Date?
     
     var previousBPM: Int?
-    
+    var validBPM: Int?
     
     func displayHeart(imageName: String) {
         heartView = UIImageView(frame: CGRect(x: 0, y: 0, width: 170, height: 170))
@@ -76,6 +76,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         if button.currentTitle == "STOP" {
             session!.stopRunning()
             toggleFlashlight()
+            initializeRateCalculationVars()
         }
     }
     
@@ -112,11 +113,16 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     override func viewDidLoad() {
         super.viewDidLoad()
         displayHeart(imageName: "Heart_inactive")
-        
+        initializeRateCalculationVars()
+    }
+    
+    func initializeRateCalculationVars() {
         stateQueue = YChannelStateQueue()
         heartRates = [Int]()
         observation = [Int]()
         obsTime = [Double]()
+        previousBPM = 0
+        validBPM = 0
     }
     
     func toggleFlashlight() {
@@ -324,39 +330,31 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     func calculate(states:Array<Int>, since: Double){
         var previous = states[0]
-        var BPMNumber = 0
-        var tempBPM = 0
-        previousBPM = 0
-        print("obstime", obsTime!)
-        
+        var measuredBPM = 0
         for i in 0..<states.count{
-            
             if (states[i]==0 && previous == 3) {
+                // We want to display data points only if two of them in a row are consistent.
                 if beginningTime != nil {
                     let interval = (obsTime?[i])! - beginningTime!
                     print("interval", interval)
                     if Int(60 / interval) < 300 && Int(60 / interval) > 30 { // heuristic: BPM shouldn't be less than 30 or greater than 300 because that's very unlikely
-                        BPMNumber = Int(60 / interval)
+                        measuredBPM = Int(60 / interval)
                     }
-                    if (previousBPM != 0){
-                        let difference = BPMNumber - previousBPM!
-                        if difference > -5 && difference < 5 {
-                            tempBPM = (BPMNumber + previousBPM!)/2
-                        }
-                    } else {
-                        tempBPM = BPMNumber
+                    if previousBPM! == 0 {
+                        previousBPM = measuredBPM
+                    }
+                    let difference = measuredBPM - previousBPM!
+                    if difference > -5 && difference < 5 { // Two consistent reads means we're probably good. Accept.
+                        validBPM = (measuredBPM + previousBPM!)/2
                     }
                     
+                    print("Measured BPM:", measuredBPM, "previousBPM:", previousBPM!, "validBPM:", validBPM)
                     
-                    previousBPM = BPMNumber
-                    BPMNumber = tempBPM
+                    previousBPM = measuredBPM
                     
-                    
-                    
-    //                print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
                     DispatchQueue.main.async {
-                        self.BPMText.text = String(BPMNumber) + " BPM"
-                        if BPMNumber > 100 {
+                        self.BPMText.text = String(self.validBPM!) + " BPM"
+                        if self.validBPM! > 100 {
                             self.BPMText.frame.size.width = 190
                             self.heartView.removeFromSuperview()
                             self.displayHeart(imageName: "Heart_normal")
@@ -369,6 +367,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                             self.pulse(imageView: self.heartView, interval: 1)
                         }
                     }
+                    
                     
                 }
                 
@@ -392,7 +391,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             obsTime!.append(NSDate().timeIntervalSince1970)
             observation!.append((stateQueue?.getState())!)
         }
-        print("obstime",obsTime!)
         let since = Date().timeIntervalSince(self.lastCalculated!)
         if (since >= 3.0) {
             //        *** 2 state matrices -- leave in for later use
