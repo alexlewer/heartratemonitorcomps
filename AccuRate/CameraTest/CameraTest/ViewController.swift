@@ -1,9 +1,8 @@
 //
 //  ViewController.swift
-//  CameraTest
+//  AccuRate
 //
-//  Created by Grant Terrien on 9/30/16.
-//  Copyright © 2016 com.terrien. All rights reserved.
+//  Contains most logic for both controlling the view, and calculating the heart rate.
 //
 
 import UIKit
@@ -348,8 +347,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         validBPM = (measuredBPM + previousBPM!)/2
                     }
                     
-                    print("Measured BPM:", measuredBPM, "previousBPM:", previousBPM!, "validBPM:", validBPM)
-                    
                     previousBPM = measuredBPM
                     
                     DispatchQueue.main.async {
@@ -367,15 +364,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                             self.pulse(imageView: self.heartView, interval: 1)
                         }
                     }
-                    
-                    
                 }
                 
                 beginningTime = obsTime?[i]
             
             }
             previous = states[i]
-            
         }
     }
 

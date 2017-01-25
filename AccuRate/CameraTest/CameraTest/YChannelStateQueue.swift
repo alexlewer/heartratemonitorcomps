@@ -2,9 +2,8 @@
 //  YChannelStateQueue.swift
 //  CameraTest
 //
-//  Created by Grant Terrien on 10/23/16.
-//  Copyright © 2016 com.terrien. All rights reserved.
-//
+//  Holds 3 brightness values in order to calculate whether they together form a
+//  rising trend, falling trend, local minimum, or local maximum.
 
 import UIKit
 
@@ -18,7 +17,7 @@ class YChannelStateQueue: NSObject {
     
     func addValue(value : Double) {
         if (valuesArray!.count >= 3) { // Should only ever reach 3
-            valuesArray!.popLast()
+            _ = valuesArray!.popLast() // "_ =" is to silence a warning from Xcode about the result of popLast() being unused.
         }
         valuesArray!.insert(value, at: 0)
     }
@@ -32,7 +31,7 @@ class YChannelStateQueue: NSObject {
             return 0; // rising
         }
         if valuesArray![0] <= valuesArray![1] && valuesArray![1] <= valuesArray![2] {
-            return 1; //falling
+            return 1; // falling
         }
         if valuesArray![0] <= valuesArray![1] && valuesArray![1] >= valuesArray![2] {
             return 2; // local minimum
@@ -41,7 +40,7 @@ class YChannelStateQueue: NSObject {
             return 3; // local maximum
         }
         
-        return -1; // hopefully don't get here
+        return -1; // should never get here
     }
 
 }
