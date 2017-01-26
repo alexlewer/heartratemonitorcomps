@@ -50,11 +50,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var obsTime : [Double]?
     var beginningTime : Double?
     var stateCount : Int?
-    
+    var bpmRecords:[Int] = [0,0,0,0,0,0]
+    var HRCount:Int = 0
+    var isFirstHR:Bool = true
     var lastCalculated : Date?
     
-    var previousBPM: Int?
-    
+    var previousBPM:Int = 0
+//    var previousBPM_weighted:Int = 0
     
     func displayHeart(imageName: String) {
         heartView = UIImageView(frame: CGRect(x: 0, y: 0, width: 170, height: 170))
@@ -324,93 +326,128 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         return (maxProb, path[bestState!]!)
         
     }
-    
+  
     func calculate(states:Array<Int>, since: Double){
         var previous = states[0]
         var BPMNumber = 0
         var tempBPM = 0
-        previousBPM = 0
-        print("obstime", obsTime!)
+        var interval = 0.0
         
         for i in 0..<states.count{
             
             if (states[i]==0 && previous == 3) {
+                
                 if beginningTime != nil {
-                    var interval = (obsTime?[i])! - beginningTime!
-                    print("interval", interval)
+                    interval = (obsTime?[i])! - beginningTime!
                     BPMNumber = Int(60 / interval)
-                    if (previousBPM != 0){
-                        tempBPM = (BPMNumber + previousBPM!)/2
-                    } else {
-                        tempBPM = BPMNumber
-                    }
-    
-    //                print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
-                    previousBPM = BPMNumber
-                    BPMNumber = tempBPM
-                    DispatchQueue.main.async {
-                        self.BPMText.text = String(BPMNumber) + " BPM"
-                        if BPMNumber > 100 {
-                            self.BPMText.frame.size.width = 190
-                            self.heartView.removeFromSuperview()
-                            self.displayHeart(imageName: "Heart_normal")
-                            self.pulse(imageView: self.heartView, interval: 0.5)
+                    bpmRecords[HRCount % 6] = BPMNumber
+                    if HRCount >= 6{
+                        print("bpm",bpmRecords)
+                        tempBPM = (BPMNumber + previousBPM)/2
+                        var avg:Double = 0
+                        var sum:Double = 0
+                        var tempRecords = bpmRecords.sorted()
+                        print("bpm",tempRecords)
+                        for k in 1..<5{
+                            sum = sum + Double(tempRecords[k])
                         }
-                        else {
-                            self.BPMText.frame.size.width = 160
-                            self.heartView.removeFromSuperview()
-                            self.displayHeart(imageName: "Heart_normal")
-                            self.pulse(imageView: self.heartView, interval: 1)
+                        avg = sum/4
+                        var usefulEnds:Int = 0
+                        if abs(Double(tempRecords[0]) - avg)<=10{
+                            sum = sum + Double(tempRecords[0])
+                            usefulEnds += 1
                         }
+                        if abs(Double(tempRecords[5]) - avg)<=10{
+                            sum = sum + Double(tempRecords[5])
+                            usefulEnds += 1
+                        }
+                        avg = sum / Double(4 + usefulEnds)
+                        if (abs(tempBPM - Int(avg)) <= 10) && (tempBPM >= 30) && (tempBPM <= 300){
+                            previousBPM = tempBPM
+                            BPMNumber = (tempRecords[2]+tempRecords[3]+tempBPM) / 3
+                        } else {
+                            BPMNumber = Int(avg)
+                        }
+
+                        print("record", bpmRecords, " currentBPM1", BPMNumber, " mean1", tempBPM, "prev", previousBPM, "abg", avg)
+                        DispatchQueue.main.async {
+                            self.BPMText.text = String(BPMNumber) + " BPM"
+                            
+                            if BPMNumber > 100 {
+                                self.BPMText.frame.size.width = 190
+                                self.heartView.removeFromSuperview()
+                                self.displayHeart(imageName: "Heart_normal")
+                                self.pulse(imageView: self.heartView, interval: 0.5)
+                            }
+                            else {
+                                self.BPMText.frame.size.width = 160
+                                self.heartView.removeFromSuperview()
+                                self.displayHeart(imageName: "Heart_normal")
+                                self.pulse(imageView: self.heartView, interval: 1)
+                            }
+                        }
+
+                        
+                        
+                    } else{
+                        previousBPM = BPMNumber
                     }
+                    
+                    
+// KEEP IT FOR NOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                    if (previousBPM != 0){
+//
+//                        tempBPM = (BPMNumber + previousBPM)/2
+//                        
+//                    } else {
+//
+//                        tempBPM = BPMNumber
+//                    }
+//                    if previousBPM == 0{
+//                        previousBPM = tempBPM
+//                    }
+                   
+//                    print("previousBPM1", previousBPM, " currentBPM1", BPMNumber, " mean1", tempBPM)
+//                    if (abs(tempBPM-previousBPM) <= 5) && (tempBPM >= 30) && (tempBPM <= 300){
+//                        previousBPM = BPMNumber
+//                        BPMNumber = tempBPM
+//                    } else {
+//                        BPMNumber = previousBPM
+//                    }
+//                    
+//                    print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
+//                    
+//
+//                    
+//                    DispatchQueue.main.async {
+//                        self.BPMText.text = String(BPMNumber) + " BPM"
+//                        
+//                        if BPMNumber > 100 {
+//                            self.BPMText.frame.size.width = 190
+//                            self.heartView.removeFromSuperview()
+//                            self.displayHeart(imageName: "Heart_normal")
+//                            self.pulse(imageView: self.heartView, interval: 0.5)
+//                        }
+//                        else {
+//                            self.BPMText.frame.size.width = 160
+//                            self.heartView.removeFromSuperview()
+//                            self.displayHeart(imageName: "Heart_normal")
+//                            self.pulse(imageView: self.heartView, interval: 1)
+//                        }
+//                    }
+                    
+                    HRCount += 1
                     
                 }
                 
                 beginningTime = obsTime?[i]
             
             }
+
             previous = states[i]
             
         }
 
-//        print("states",states)
-//        for i in 0..<states.count{
-//            print("previous",previous, "current",states[i])
-//            if (states[i]==0 && canPlaceFirstMark && previous == 3) {
-//                firstMark = i
-//                canPlaceFirstMark = false
-//            } else if (states[i]==0 && previous == 3){
-//                secondMark = i
-//                BPMNumber = Int(60.0/((Double(secondMark - firstMark + 1)/Double(states.count))*since))
-//                if (previousBPM != 0){
-//                    tempBPM = (BPMNumber + previousBPM!)/2
-//                } else {
-//                    tempBPM = BPMNumber
-//                }
-//                
-////                print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
-//                previousBPM = BPMNumber
-//                BPMNumber = tempBPM
-//                DispatchQueue.main.async {
-//                    self.BPMText.text = String(BPMNumber) + " BPM"
-//                    if BPMNumber > 100 {
-//                        self.BPMText.frame.size.width = 190
-//                        self.heartView.removeFromSuperview()
-//                        self.displayHeart(imageName: "Heart_normal")
-//                        self.pulse(imageView: self.heartView, interval: 0.5)
-//                    }
-//                    else {
-//                        self.BPMText.frame.size.width = 160
-//                        self.heartView.removeFromSuperview()
-//                        self.displayHeart(imageName: "Heart_normal")
-//                        self.pulse(imageView: self.heartView, interval: 1)
-//                    }
-//                }
-//                firstMark = i
-//                secondMark = -1
-//            }
-//            previous = states[i]
-//        }
     }
 
     
