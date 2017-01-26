@@ -95,11 +95,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         else {
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_inactive")
-            
             // End camera processes
             session!.stopRunning()
             toggleFlashlight()
-            
             timer.invalidate()
             button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
             button.setTitle("START", for: UIControlState.normal)
@@ -108,6 +106,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             timerText.text = "00:00:00"
             BPMText.frame.size.width = 175
             BPMText.text = "- - - BPM"
+            writeCSV()
         }
     }
     
@@ -205,9 +204,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         let mean = detectFingerCoverage(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
         
-        if self.camCovered {
-            useCaptureOutputForHeartRateEstimation(mean: mean, bytesPerRow: bytesPerRow)
-        }
+        //Commented out for collecting data
+        //if self.camCovered {
+        useCaptureOutputForHeartRateEstimation(mean: mean, bytesPerRow: bytesPerRow)
+        //}
         // Compute mean and standard deviation of pixel luma values
         
     }
@@ -492,8 +492,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     func writeCSV(){
         let fileName = "data.csv"
         let path = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
-        var csvText = "Observation,State\n"
-        // What to write?
+        var csvText = "Time,State\n"
+        for data in self.observation! {
+            for time in self.obsTime! {
+                let newLine = "\(time),\(data)\n"
+                csvText.append(newLine)
+            }
+        }
         do {
             try csvText.write(to: path!, atomically: true, encoding: String.Encoding.utf8)
         } catch {
