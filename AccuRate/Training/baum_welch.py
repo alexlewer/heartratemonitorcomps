@@ -58,6 +58,9 @@ def baum_welch( trans, emit, observ ):
         emit = np.ones( (num_states, num_obs) )
         # expectation step, forward and backward probs
         P,F,B = fb_alg( old_trans, old_emit, observ)
+
+        print("Theirs, iteration ", count, ": alpha = ", F, ", beta = ", B) 
+
         # need to get transitional probabilities at each time step too
         for a_ind in range(num_states):
             for b_ind in range(num_states):
@@ -80,7 +83,7 @@ def baum_welch( trans, emit, observ ):
                                       np.sum( P[a_ind,1:])
         emit = emit / np.sum(emit,1)
         # compare
-        if np.linalg.norm(old_trans-trans) < .1 and np.linalg.norm(old_emit-emit) < .1:
+        if np.linalg.norm(old_trans-trans) < .00001 and np.linalg.norm(old_emit-emit) < .00001:
             break
 
         count += 1

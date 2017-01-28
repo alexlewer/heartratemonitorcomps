@@ -8,19 +8,17 @@ def alpha(A, B, observations):
 	T = len(observations)
 	num_states, num_obs = B.shape
 
-	fw = np.zeros((num_states, T + 1))
+	fw = np.zeros((num_states, T))
 
-	# Assuming all states have equal probability of being start state.
-	# If this is not true, line below may have to be changed.
-	# EDIT: changed to 1.0 for all states
-	fw[:, 0] = 1.0/num_states
-	for obs_ind in range(T):
-		f_row_vec = np.matrix(fw[:,obs_ind])
-		print(B[:,observations[obs_ind]])
-		fw[:, obs_ind+1] = f_row_vec * \
-							np.matrix(A) * \
-							np.matrix(np.diag(B[:,observations[obs_ind]]))
-		fw[:,obs_ind+1] = fw[:,obs_ind+1]/np.sum(fw[:,obs_ind+1])
+	initial = [0.25, 0.20, 0.10, 0.45]
+	for index, prob in enumerate(initial):
+		fw[index, 0] = prob * B[index, observations[0]]	
+
+	for t in range(1, T):
+		for j in range(num_states):
+			for i in range(num_states):
+				fw[j,t] += fw[i,t-1] * A[i,j]
+			fw[j,t] *= B[j,observations[t]]
 
 	return fw
 
@@ -30,17 +28,16 @@ def beta(A, B, observations):
 	T = len(observations)
 	num_states, num_obs = B.shape
 
-	bw = np.zeros((num_states, T + 1))
+	bw = np.zeros((num_states, T))
 
 	# Assuming if a state is last, it has a 1.0 prob of being last.
 	# If this is not true, line below may have to be changed.
 	bw[:,-1] = 1.0
-	for obs_ind in range(T, 0, -1):
-		b_col_vec = np.matrix(bw[:,obs_ind]).transpose()
-		bw[:, obs_ind-1] = (np.matrix(A) * \
-							 np.matrix(np.diag(B[:,observations[obs_ind-1]])) * \
-							 b_col_vec).transpose()
-		bw[:,obs_ind-1] = bw[:,obs_ind-1]/np.sum(bw[:,obs_ind-1])
+	for t in range(T-2, -1, -1):
+		for j in range(num_states):
+			for i in range(num_states):
+				bw[j,t] += bw[i,t+1] * A[i,j]
+			bw[j,t] *= B[j,observations[t]]
 
 	return bw
 
@@ -54,7 +51,7 @@ def xi(A, B, alpha, beta, prob_obs, observations):
 			for t_ind in range(T):
 				not_quite_xi = \
 				alpha[i_ind,t_ind] * \
-				beta[j_ind,t_ind+1] * \
+				beta[j_ind,t_ind] * \
 				A[i_ind,j_ind] * \
 				B[j_ind, observations[t_ind]]
 
@@ -89,6 +86,7 @@ def b_hat(B, gamma, observations):
 
 	for i_ind in range(num_states):
 		for o_ind in range(num_obs):
+			#print("i_ind: ", i_ind, " o_ind: ", o_ind)
 			cur_obs_ind = np.array(np.where(observations == o_ind)) + 1
 			b_hat[i_ind, o_ind] = np.sum(gamma[cur_obs_ind, i_ind]) / np.sum(gamma[:, i_ind])
 
@@ -101,9 +99,12 @@ def baum_welch(A, B, observations):
 	num_states, num_obs = B.shape
 	T = len(observations)
 
+	count = 1
 	while True:
 		alph = alpha(curA, curB, observations)
 		bet = beta(curA, curB, observations)
+
+		print("Ours, iteration ", count, ": alpha = ", alph, ", beta = ", bet)
 
 		prob_obs = 0
 		for t_ind in range(T):
@@ -117,24 +118,26 @@ def baum_welch(A, B, observations):
 		oldA, oldB = curA, curB
 
 		curA = a_hat(x)
-		curB = b_hat(B, gam, observations)
+		curB = b_hat(oldB, gam, observations)
 
 
-		if np.linalg.norm(oldA - curA) < .1 and np.linalg.norm(oldB - curB) < .1:
+		if np.linalg.norm(oldA - curA) < .00001 and np.linalg.norm(oldB - curB) < .00001:
 			break
+
+		count += 1
 
 	return curA, curB
 
 def test():
 	A = np.array([0.6794, 0.3206, 0.0, 0.0, \
-		0.0, 0.5366, 0.4634, 0.0, \
-		0.0, 0.0, 0.3485, 0.6516, \
-		0.1508, 0.0, 0.0, 0.8492])
+				  0.0, 0.5366, 0.4634, 0.0, \
+				  0.0, 0.0, 0.3485, 0.6516, \
+				  0.1508, 0.0, 0.0, 0.8492])
 
 	B = np.array([0.6884, 0.0015, 0.3002, 0.0099, \
-		0.0, 0.7205, 0.0102, 0.2694, \
-		0.2894, 0.3731, 0.3362, 0.0023, \
-		0.0005, 0.8440, 0.0021, 0.1534])
+				  0.0, 0.7205, 0.0102, 0.2694, \
+				  0.2894, 0.3731, 0.3362, 0.0023, \
+				  0.0005, 0.8440, 0.0021, 0.1534])
 
 	A = A.reshape((-1,4))
 	B = B.reshape((-1,4))
