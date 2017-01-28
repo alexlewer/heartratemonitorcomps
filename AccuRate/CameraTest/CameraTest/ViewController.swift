@@ -46,6 +46,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var stateQueue : YChannelStateQueue?
     var heartRates : [Int]?
     var observation : [Int]?
+    var meanCollection = [Any]()
+    var timeCollection = [Any]()
     
     var obsTime : [Double]?
     var beginningTime : Double?
@@ -461,6 +463,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         if (stateQueue?.getState() != -1) {
             obsTime!.append(NSDate().timeIntervalSince1970)
             observation!.append((stateQueue?.getState())!)
+            let date = Date()
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MMM dd hh:mm:ss.SSS"
+            let dateString = dateFormatter.string(from: date)
+            timeCollection.append(dateString)
+            let cameraData = String(format:"%.3f",mean)
+            meanCollection.append(cameraData)
         }
         print("obstime",obsTime!)
 //        if (observation!.count == 90) {
@@ -492,11 +501,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     func writeCSV(){
         let fileName = "data.csv"
         let path = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
-        var csvText = "Time,State\n"
-        for data in self.observation! {
-            for time in self.obsTime! {
-                let newLine = "\(time),\(data)\n"
-                csvText.append(newLine)
+        var csvText = "Time,Camera,State\n"
+        for state in self.observation! {
+            for time in self.timeCollection {
+                for camera in self.meanCollection {
+                    let newLine = "\(time),\(camera),\(state)\n"
+                    csvText.append(newLine)
+                }
             }
         }
         do {
