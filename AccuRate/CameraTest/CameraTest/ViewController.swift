@@ -335,7 +335,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 // We want to display data points only if two of them in a row are consistent.
                 if beginningTime != nil {
                     let interval = (obsTime?[i])! - beginningTime!
-                    print("interval", interval)
                     if Int(60 / interval) < 300 && Int(60 / interval) > 30 { // heuristic: BPM shouldn't be less than 30 or greater than 300 because that's very unlikely
                         measuredBPM = Int(60 / interval)
                     }
@@ -346,9 +345,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     if difference > -5 && difference < 5 { // Two consistent reads means we're probably good. Accept.
                         validBPM = (measuredBPM + previousBPM!)/2
                     }
-                    
                     previousBPM = measuredBPM
-                    
                     DispatchQueue.main.async {
                         self.BPMText.text = String(self.validBPM!) + " BPM"
                         if self.validBPM! > 100 {
@@ -387,11 +384,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
         let since = Date().timeIntervalSince(self.lastCalculated!)
         if (since >= 3.0) {
-            //        *** 2 state matrices -- leave in for later use
-            //            let trans = [[0.6773,0.3227],[0.0842,0.9158]]
-            //            let emit = [[0.7689,0.0061,0.1713,0.0537],
-            //                        [0.0799,0.6646,0.1136,0.1420]]
-            //            let p = [0.2, 0.8]
             let trans = [[0.6794, 0.3206, 0.0, 0.0],
                          [0.0, 0.5366, 0.4634, 0.0],
                          [0.0, 0.0, 0.3485, 0.6516],
