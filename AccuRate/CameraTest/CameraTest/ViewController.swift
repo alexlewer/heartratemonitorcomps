@@ -43,6 +43,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     let MIN_LUMA_MEAN = Double(60)
     let MAX_LUMA_STD_DEV = Double(20)
     
+    var brightnesses : [Double]?
+    
     var stateQueue : YChannelStateQueue?
     var heartRates : [Int]?
     var observation : [Int]?
@@ -56,6 +58,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var lastCalculated : Date?
     
     var previousBPM:Int = 0
+    var previousBrightnessDifference : Double?
 //    var previousBPM_weighted:Int = 0
     
     func displayHeart(imageName: String) {
@@ -118,7 +121,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         stateQueue = YChannelStateQueue()
         heartRates = [Int]()
         observation = [Int]()
+        brightnesses = [Double]()
         obsTime = [Double]()
+        previousBrightnessDifference = -1
     }
     
     func toggleFlashlight() {
@@ -327,16 +332,24 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
     }
   
-    func calculate(states:Array<Int>, since: Double){
-        var previous = states[0]
+    func calculate(states:Array<Int>, since: Double, brightnesses: [Double]){
+        print("STATES:",states)
+        var previous = (states[0], brightnesses[0])
         var BPMNumber = 0
         var tempBPM = 0
         var interval = 0.0
+        var brightnessDifference: Double = -1
         
         for i in 0..<states.count{
-            
-            if (states[i]==0 && previous == 3) {
-                
+            if states[i] == 3 && previous.0 == 2 {
+                brightnessDifference = abs(previous.1-brightnesses[i])
+                if previousBrightnessDifference == -1 {
+                    previousBrightnessDifference = brightnessDifference
+                }
+
+                print("brightness difference:",abs(previous.1-brightnesses[i]))
+            }
+            if (states[i]==0 && previous.0 == 3) {
                 if beginningTime != nil {
                     interval = (obsTime?[i])! - beginningTime!
                     BPMNumber = Int(60 / interval)
@@ -362,11 +375,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                             usefulEnds += 1
                         }
                         avg = sum / Double(4 + usefulEnds)
-                        if (abs(tempBPM - Int(avg)) <= 10) && (tempBPM >= 30) && (tempBPM <= 300){
+//                        if (previousBrightnessDifference!*3 > brightnessDifference) && (brightnessDifference > previousBrightnessDifference! /3)
+                        if (abs(tempBPM - Int(avg)) <= 10)
+                            && (tempBPM >= 30) && (tempBPM <= 300) {
                             previousBPM = tempBPM
                             BPMNumber = (tempRecords[2]+tempRecords[3]+tempBPM) / 3
                         } else {
-                            BPMNumber = Int(avg)
+                            BPMNumber = previousBPM
                         }
 
                         print("record", bpmRecords, " currentBPM1", BPMNumber, " mean1", tempBPM, "prev", previousBPM, "abg", avg)
@@ -444,8 +459,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             
             }
 
-            previous = states[i]
-            
+            previous = (states[i], brightnesses[i])
+            previousBrightnessDifference = brightnessDifference
         }
 
     }
@@ -458,9 +473,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         if (observation!.count == 0) {
             self.lastCalculated = Date()
         }
-        if (stateQueue?.getState() != -1) {
+        if (stateQueue?.getState().0 != -1) {
             obsTime!.append(NSDate().timeIntervalSince1970)
-            observation!.append((stateQueue?.getState())!)
+            brightnesses!.append((stateQueue?.getState().1)!)
+            observation!.append((stateQueue?.getState())!.0)
         }
         print("obstime",obsTime!)
 //        if (observation!.count == 90) {
@@ -483,8 +499,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             let p = [0.25, 0.20, 0.10, 0.45]
             let states = [0,1,2,3]
             
-            self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1, since: since)
+            self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1, since: since,
+                           brightnesses: brightnesses!)
             observation!.removeAll()
+            brightnesses?.removeAll()
             obsTime!.removeAll()
         }
     }
