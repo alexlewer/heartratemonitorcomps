@@ -343,10 +343,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     measuredBPM = Int(60 / interval)
                     let difference = abs(measuredBPM - previousMeasuredBPM!)
                     print("DIFFERENCE:", difference)
-                    if difference <= 10 || difference == measuredBPM && measuredBPM < 300 && measuredBPM > 20 && previousMeasuredBPM != 0 {
+                    if (difference <= 10 || difference == measuredBPM) && measuredBPM < 300 && measuredBPM > 20 && previousMeasuredBPM != 0 {
                         print("got to here with measured BPM:", measuredBPM, "and previous BPM:", previousMeasuredBPM!)
                         validBPM = (measuredBPM + previousMeasuredBPM!)/2
                         bpmRecords[HRCount % 6] = validBPM
+                        print("BPM RECORDS:", bpmRecords)
                         measuredBPM = validBPM
                         if HRCount >= 6{
                             tempBPM = (validBPM + previousBPM!)/2
