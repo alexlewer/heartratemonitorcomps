@@ -57,6 +57,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var previousBPM : Int?
     var previousMeasuredBPM : Int?
     
+    @IBOutlet var progressBar: UIProgressView!
+    
     func displayHeart(imageName: String) {
         heartView = UIImageView(frame: CGRect(x: 0, y: 0, width: 170, height: 170))
         self.view.addSubview(heartView)
@@ -124,6 +126,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         obsTime = [Double]()
         previousBPM = 0
         previousMeasuredBPM = 0
+        progressBar.progress = 0.0
     }
     
     func toggleFlashlight() {
@@ -335,6 +338,23 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         var tempBPM = 0
         var interval = 0.0
         var measuredBPM = previousMeasuredBPM!
+        
+        var validMeasurementsSoFar = 0
+        for i in 0..<bpmRecords.count {
+            if bpmRecords[i] != 0 {
+                validMeasurementsSoFar += 1
+            }
+        }
+        if validMeasurementsSoFar < 6 {
+            // Update progress bar
+            DispatchQueue.main.async {
+                self.progressBar.progress = Float(validMeasurementsSoFar)/Float(6.0)
+            }
+        } else {
+            DispatchQueue.main.async {
+                self.progressBar.isHidden = true
+            }
+        }
         
         for i in 0..<states.count {
             if (states[i]==0 && previous == 3) {
