@@ -59,6 +59,16 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     var previousBPM:Int = 0
     var previousBrightnessDifference : Double?
+    
+    var previousCover = false
+    var camCoverStartTime : Double = 0.0
+    var camCoverStartIndex:Int = 0
+    var needToFindNextPeak = false
+    var nextPeakIndex:Int = 0
+    var tempObservation : [Int] = []
+    var tempObsTime : [Double] = []
+    var tempBrightness : [Double] = []
+    var previousMaxBrightness : Double = -1.0
 //    var previousBPM_weighted:Int = 0
     
     func displayHeart(imageName: String) {
@@ -210,9 +220,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         let mean = detectFingerCoverage(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
         
-        if self.camCovered {
-            useCaptureOutputForHeartRateEstimation(mean: mean, bytesPerRow: bytesPerRow)
-        }
+//        if self.camCovered {
+//            useCaptureOutputForHeartRateEstimation(mean: mean, bytesPerRow: bytesPerRow)
+//        }
+        useCaptureOutputForHeartRateEstimation(mean: mean, bytesPerRow: bytesPerRow)
         // Compute mean and standard deviation of pixel luma values
         
     }
@@ -332,7 +343,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
     }
   
-    func calculate(states:Array<Int>, since: Double, brightnesses: [Double]){
+    func calculate(states:Array<Int>, brightnesses: [Double]){
         print("STATES:",states)
         var previous = (states[0], brightnesses[0])
         var BPMNumber = 0
@@ -351,7 +362,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             }
             if (states[i]==0 && previous.0 == 3) {
                 if beginningTime != nil {
+                    
                     interval = (obsTime?[i])! - beginningTime!
+                    print("interval", interval)
                     BPMNumber = Int(60 / interval)
                     bpmRecords[HRCount % 6] = BPMNumber
                     if HRCount >= 6{
@@ -381,10 +394,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                             previousBPM = tempBPM
                             BPMNumber = (tempRecords[2]+tempRecords[3]+tempBPM) / 3
                         } else {
-                            BPMNumber = previousBPM
+                            BPMNumber = Int(avg)
                         }
 
-                        print("record", bpmRecords, " currentBPM1", BPMNumber, " mean1", tempBPM, "prev", previousBPM, "abg", avg)
+                        print("record", bpmRecords, " currentBPM1", BPMNumber, " mean1", tempBPM, "prev", previousBPM, "avg", avg)
                         DispatchQueue.main.async {
                             self.BPMText.text = String(BPMNumber) + " BPM"
                             
@@ -409,48 +422,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     }
                     
                     
-// KEEP IT FOR NOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//                    if (previousBPM != 0){
-//
-//                        tempBPM = (BPMNumber + previousBPM)/2
-//                        
-//                    } else {
-//
-//                        tempBPM = BPMNumber
-//                    }
-//                    if previousBPM == 0{
-//                        previousBPM = tempBPM
-//                    }
-                   
-//                    print("previousBPM1", previousBPM, " currentBPM1", BPMNumber, " mean1", tempBPM)
-//                    if (abs(tempBPM-previousBPM) <= 5) && (tempBPM >= 30) && (tempBPM <= 300){
-//                        previousBPM = BPMNumber
-//                        BPMNumber = tempBPM
-//                    } else {
-//                        BPMNumber = previousBPM
-//                    }
-//                    
-//                    print("previousBPM", previousBPM, " currentBPM", BPMNumber, " mean", tempBPM)
-//                    
-//
-//                    
-//                    DispatchQueue.main.async {
-//                        self.BPMText.text = String(BPMNumber) + " BPM"
-//                        
-//                        if BPMNumber > 100 {
-//                            self.BPMText.frame.size.width = 190
-//                            self.heartView.removeFromSuperview()
-//                            self.displayHeart(imageName: "Heart_normal")
-//                            self.pulse(imageView: self.heartView, interval: 0.5)
-//                        }
-//                        else {
-//                            self.BPMText.frame.size.width = 160
-//                            self.heartView.removeFromSuperview()
-//                            self.displayHeart(imageName: "Heart_normal")
-//                            self.pulse(imageView: self.heartView, interval: 1)
-//                        }
-//                    }
-                    
                     HRCount += 1
                     
                 }
@@ -467,44 +438,86 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
 
     
     func useCaptureOutputForHeartRateEstimation(mean: Double, bytesPerRow: Int) {
-        stateCount = 0
-        let pixels = 1080 * bytesPerRow
-        stateQueue?.addValue(value: mean/Double(pixels))
-        if (observation!.count == 0) {
-            self.lastCalculated = Date()
-        }
-        if (stateQueue?.getState().0 != -1) {
-            obsTime!.append(NSDate().timeIntervalSince1970)
-            brightnesses!.append((stateQueue?.getState().1)!)
-            observation!.append((stateQueue?.getState())!.0)
-        }
-        print("obstime",obsTime!)
-//        if (observation!.count == 90) {
-        let since = Date().timeIntervalSince(self.lastCalculated!)
-        if (since >= 3.0) {
-            //        *** 2 state matrices -- leave in for later use
-            //            let trans = [[0.6773,0.3227],[0.0842,0.9158]]
-            //            let emit = [[0.7689,0.0061,0.1713,0.0537],
-            //                        [0.0799,0.6646,0.1136,0.1420]]
-            //            let p = [0.2, 0.8]
-            let trans = [[0.6794, 0.3206, 0.0, 0.0],
-                         [0.0, 0.5366, 0.4634, 0.0],
-                         [0.0, 0.0, 0.3485, 0.6516],
-                         [0.1508, 0.0, 0.0, 0.8492]]
+        let currentTime = NSDate().timeIntervalSince1970
+        let trans = [[0.6794, 0.3206, 0.0, 0.0],
+                     [0.0, 0.5366, 0.4634, 0.0],
+                     [0.0, 0.0, 0.3485, 0.6516],
+                     [0.1508, 0.0, 0.0, 0.8492]]
+        
+        let emit = [[0.6884, 0.0015, 0.3002, 0.0099],
+                    [0.0, 0.7205, 0.0102, 0.2694],
+                    [0.2894, 0.3731, 0.3362, 0.0023],
+                    [0.0005, 0.8440, 0.0021, 0.1534]]
+        let p = [0.25, 0.20, 0.10, 0.45]
+        let states = [0,1,2,3]
+        
+        if (self.camCovered) {
+            let pixels = 1080 * bytesPerRow
+            let value = mean/Double(pixels)
+            stateQueue?.addValue(value: value)
+            if (!self.previousCover) {
+                if (self.tempObservation.count != 0){
+                    var maxBrightness = -1.0
+                    if ((tempObsTime.last! - tempObsTime.first!) >= 2.0) {
+                        for i in 0..<self.tempObservation.count {
+                            if ((tempObsTime.last! - tempObsTime[self.tempObsTime.count - i - 1]) >= 1.0) {
+                                self.observation? += tempObservation
+                                self.obsTime? += tempObsTime
+                                self.brightnesses? += tempBrightness
+                            } else {
+                                if (maxBrightness < tempBrightness[self.tempObsTime.count - i - 1]) {
+                                    self.tempBrightness.removeLast(i)
+                    
+                                    self.tempObsTime.removeLast(i)
+                                    self.tempObservation.removeLast(i)
+                                }
+                            }
+                        }
+                        
+                    }
+                    tempObsTime = []
+                    tempObservation = []
+                    tempBrightness = []
+                }
+                self.camCoverStartTime = currentTime
+                self.needToFindNextPeak = true
+                if (self.observation?.count != 0){
+                    if (((self.obsTime?.last)! - (self.obsTime?.first)!) >= 3.0){
+                        self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1, brightnesses: brightnesses!)
+//                        observation!.removeAll()
+//                        brightnesses?.removeAll()
+//                        obsTime!.removeAll()
+                    }
+                }
+            }
+            self.tempObservation.append((stateQueue?.getState())!.0)
+            self.tempBrightness.append((stateQueue?.getState())!.1)
+            self.tempObsTime.append(currentTime)
+            if (needToFindNextPeak) {
+                if ((currentTime - self.camCoverStartTime) >= 1.0) {
+                    self.needToFindNextPeak = false
+                } else {
+                    if (self.previousMaxBrightness < tempBrightness.last!) {
+                        self.previousMaxBrightness = tempBrightness.last!
+                        tempObsTime = [tempObsTime.last!]
+                        tempObservation = [tempObservation.last!]
+                        tempBrightness = [tempBrightness.last!]
+                    }
+                }
+
+            }
             
-            let emit = [[0.6884, 0.0015, 0.3002, 0.0099],
-                        [0.0, 0.7205, 0.0102, 0.2694],
-                        [0.2894, 0.3731, 0.3362, 0.0023],
-                        [0.0005, 0.8440, 0.0021, 0.1534]]
-            let p = [0.25, 0.20, 0.10, 0.45]
-            let states = [0,1,2,3]
+            if (stateQueue?.getState().0 != -1) {
+                obsTime!.append(NSDate().timeIntervalSince1970)
+                brightnesses!.append((stateQueue?.getState().1)!)
+                observation!.append((stateQueue?.getState())!.0)
+            }
             
-            self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1, since: since,
-                           brightnesses: brightnesses!)
-            observation!.removeAll()
-            brightnesses?.removeAll()
-            obsTime!.removeAll()
         }
+        
+
+        
+
     }
 
     func writeCSV(){
