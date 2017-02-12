@@ -71,6 +71,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var previousMaxBrightness : Double = -1.0
 //    var previousBPM_weighted:Int = 0
     
+    func initialize() {
+        stateQueue = YChannelStateQueue()
+        heartRates = [Int]()
+        observation = [Int]()
+        brightnesses = [Double]()
+        obsTime = [Double]()
+        previousBrightnessDifference = -1
+    }
+    
     func displayHeart(imageName: String) {
         heartView = UIImageView(frame: CGRect(x: 0, y: 0, width: 170, height: 170))
         self.view.addSubview(heartView)
@@ -127,13 +136,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     override func viewDidLoad() {
         super.viewDidLoad()
         displayHeart(imageName: "Heart_inactive")
-        
-        stateQueue = YChannelStateQueue()
-        heartRates = [Int]()
-        observation = [Int]()
-        brightnesses = [Double]()
-        obsTime = [Double]()
-        previousBrightnessDifference = -1
+        initialize()
     }
     
     func toggleFlashlight() {
@@ -186,6 +189,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             startTime = NSDate.timeIntervalSinceReferenceDate
         }
         else {
+            initialize()
             timer.invalidate()
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_normal")
