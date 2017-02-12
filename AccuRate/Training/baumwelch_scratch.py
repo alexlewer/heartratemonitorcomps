@@ -3,6 +3,7 @@
 import numpy as np
 import csv
 from DiscreteHMM import DiscreteHMM
+import sys
 
 # calculate forward probability matrix
 def alpha(A, B, observations):
@@ -132,8 +133,10 @@ def baum_welch(A, B, observations):
 			break
 
 		count += 1
+		print(".",end='')
+		sys.stdout.flush()
 
-	print(count," iterations.")
+	print("\n", count," iterations.")
 
 	return curA, curB
 
