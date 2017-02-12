@@ -6,15 +6,14 @@ from DiscreteHMM import DiscreteHMM
 import sys
 
 # calculate forward probability matrix
-def alpha(A, B, observations):
+def alpha(A, B, pi, observations):
 
 	T = len(observations)
 	num_states, num_obs = B.shape
 
 	fw = np.zeros((num_states, T), dtype=np.longdouble)
 
-	initial = [0.25, 0.20, 0.10, 0.45]
-	for index, prob in enumerate(initial):
+	for index, prob in enumerate(pi):
 		fw[index, 0] = prob * B[index, observations[0]]	
 
 	for t in range(1, T):
@@ -108,15 +107,16 @@ def b_hat(B, gamma, observations):
 
 	return b_hat
 
-def baum_welch(A, B, observations):
+def baum_welch(A, B, pi, observations):
 	curA = A
 	curB = B
+	cur_pi = pi
 	num_states, num_obs = B.shape
 	T = len(observations)
 
 	count = 1
 	while True:
-		alph = alpha(curA, curB, observations)
+		alph = alpha(curA, curB, cur_pi, observations)
 		bet = beta(curA, curB, observations)
 
 		#for r in alph.T:
@@ -124,32 +124,46 @@ def baum_welch(A, B, observations):
 		x = xi(curA, curB, alph, bet, observations)
 		gam = gamma(alph, bet, observations)
 
-		oldA, oldB = curA, curB
+		oldA, oldB, old_pi = curA, curB, cur_pi
 
 		curA = a_hat(x)
 		curB = b_hat(oldB, gam, observations)
+		cur_pi = gam[0]
 
-		if np.linalg.norm(oldA - curA) < .0001 and np.linalg.norm(oldB - curB) < .0001:
+		if np.linalg.norm(oldA - curA) < .00001 and np.linalg.norm(oldB - curB) < .00001:
 			break
 
 		count += 1
 		print(".",end='')
 		sys.stdout.flush()
 
-	print("\n", count," iterations.")
+	print(count," iterations.")
 
-	return curA, curB
+	return curA, curB, cur_pi
 
 def train(filepath):
-	A = np.array([0.6794, 0.3206, 0.0, 0.0, \
-				  0.0, 0.5366, 0.4634, 0.0, \
-				  0.0, 0.0, 0.3485, 0.6516, \
-				  0.1508, 0.0, 0.0, 0.8492])
+	#A = np.array([0.6794, 0.3206, 0.0, 0.0, \
+	#			  0.0, 0.5366, 0.4634, 0.0, \
+	#			  0.0, 0.0, 0.3485, 0.6516, \
+	#			  0.1508, 0.0, 0.0, 0.8492])
 
-	B = np.array([0.6884, 0.0015, 0.3002, 0.0099, \
-				  0.0, 0.7205, 0.0102, 0.2694, \
-				  0.2894, 0.3731, 0.3362, 0.0023, \
-				  0.0005, 0.8440, 0.0021, 0.1534])
+	#B = np.array([0.6884, 0.0015, 0.3002, 0.0099, \
+	#			  0.0, 0.7205, 0.0102, 0.2694, \
+	#			  0.2894, 0.3731, 0.3362, 0.0023, \
+	#			  0.0005, 0.8440, 0.0021, 0.1534])
+
+	A = np.array([.5, .5, 0.0, 0.0, \
+				0.0, .5, .5, 0.0, \
+				0.0, 0.0, .5, .5, \
+				.5, 0.0, 0.0, .5])
+
+	B = np.array([.25, .25, .25, .25, \
+				.25, .25, .25, .25, \
+				.25, .25, .25, .25, \
+				.25, .25, .25, .25])
+
+	initial = [0.25, 0.20, 0.10, 0.45]
+	cur_pi = initial
 
 	A = A.reshape((-1,4))
 	B = B.reshape((-1,4))
@@ -172,7 +186,12 @@ def train(filepath):
 				#print("His: ", hmm2.alpha(O))
 				#print("Ours: ", alpha(A, B, O).T)
 
-				A, B = baum_welch(A, B, O)
+				A, B, cur_pi = baum_welch(A, B, cur_pi, O)
+
+	with open("results.txt", 'w') as file:
+		file.write(str(A))
+		file.write(str(B))
+		file.write(str(cur_pi))
 
 	return A, B
 
