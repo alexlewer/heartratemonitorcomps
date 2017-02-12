@@ -1,6 +1,8 @@
 # Aidan Holloway-Bidwell, Lucy Lu, Grant Terrien, Renzhi Wu
 # Baum-Welch training
 import numpy as np
+import csv
+from DiscreteHMM import DiscreteHMM
 
 # calculate forward probability matrix
 def alpha(A, B, observations):
@@ -8,7 +10,7 @@ def alpha(A, B, observations):
 	T = len(observations)
 	num_states, num_obs = B.shape
 
-	fw = np.zeros((num_states, T))
+	fw = np.zeros((num_states, T), dtype=np.longdouble)
 
 	initial = [0.25, 0.20, 0.10, 0.45]
 	for index, prob in enumerate(initial):
@@ -28,7 +30,7 @@ def beta(A, B, observations):
 	T = len(observations)
 	num_states, num_obs = B.shape
 
-	bw = np.zeros((num_states, T))
+	bw = np.zeros((num_states, T), dtype=np.longdouble)
 
 	# Assuming if a state is last, it has a 1.0 prob of being last.
 	# If this is not true, line below may have to be changed.
@@ -48,7 +50,7 @@ def xi(A, B, alpha, beta, observations):
 
 	num_states = A.shape[0]
 	T = len(observations)
-	xi = np.zeros((T, num_states, num_states))
+	xi = np.zeros((T, num_states, num_states), dtype=np.longdouble)
 
 	for i_ind in range(num_states):
 		for j_ind in range(num_states):
@@ -68,7 +70,7 @@ def prob_obs(alpha):
 
 def a_hat(xi):
 	T, num_states = xi.shape[:2]
-	a_hat = np.zeros((num_states, num_states))
+	a_hat = np.zeros((num_states, num_states), dtype=np.longdouble)
 
 	for i in range(num_states):
 		for j in range(num_states):
@@ -82,7 +84,7 @@ def gamma(alpha, beta, observations):
 
 	T = len(observations)
 	num_states = alpha.shape[0]
-	gamma = np.zeros((T, num_states))
+	gamma = np.zeros((T, num_states), dtype=np.longdouble)
 
 	for t_ind in range(T):
 		for j_ind in range(num_states):
@@ -94,7 +96,7 @@ def b_hat(B, gamma, observations):
 	num_states, num_obs = B.shape
 	T = len(observations)
 
-	b_hat = np.zeros((num_states, num_obs))
+	b_hat = np.zeros((num_states, num_obs), dtype=np.longdouble)
 
 	for i_ind in range(num_states):
 		for o_ind in range(num_obs):
@@ -104,7 +106,6 @@ def b_hat(B, gamma, observations):
 			b_hat[i_ind, o_ind] /= sum(gamma[:, i_ind])
 
 	return b_hat
-
 
 def baum_welch(A, B, observations):
 	curA = A
@@ -117,6 +118,8 @@ def baum_welch(A, B, observations):
 		alph = alpha(curA, curB, observations)
 		bet = beta(curA, curB, observations)
 
+		#for r in alph.T:
+			#print(r)
 		x = xi(curA, curB, alph, bet, observations)
 		gam = gamma(alph, bet, observations)
 
@@ -125,17 +128,16 @@ def baum_welch(A, B, observations):
 		curA = a_hat(x)
 		curB = b_hat(oldB, gam, observations)
 
-
-		if np.linalg.norm(oldA - curA) < .00001 and np.linalg.norm(oldB - curB) < .00001:
+		if np.linalg.norm(oldA - curA) < .0001 and np.linalg.norm(oldB - curB) < .0001:
 			break
 
 		count += 1
 
+	print(count," iterations.")
+
 	return curA, curB
 
-
-# Deprecated by the tests.py module
-def test():
+def train(filepath):
 	A = np.array([0.6794, 0.3206, 0.0, 0.0, \
 				  0.0, 0.5366, 0.4634, 0.0, \
 				  0.0, 0.0, 0.3485, 0.6516, \
@@ -149,21 +151,27 @@ def test():
 	A = A.reshape((-1,4))
 	B = B.reshape((-1,4))
 
-	#print(A, B)
+	with open(filepath, 'r') as file:
+		obs_files = file.readlines()
+		for obs_filepath in obs_files:
+			print("Training on ", obs_filepath.rstrip())
+			with open(obs_filepath.rstrip(), 'r') as obs_file:
+				O = []
+				reader = csv.reader(obs_file)
+				for row in reader:
+					try:
+						O.append(int(row[2]))
+					except ValueError:
+						pass
 
-	O = np.array([0,3,1,2,1,0,2,3,0,1,0,2,0,1,2,2,0,3,0,0,2,0,0,1,2,0,1,2,0])
+				#pi = np.array([0.25, 0.20, 0.10, 0.45])
+				#hmm2 = DiscreteHMM(4,4,A,B,pi,init_type='user',precision=np.longdouble,verbose=True)
+				#print("His: ", hmm2.alpha(O))
+				#print("Ours: ", alpha(A, B, O).T)
 
-	alph = alpha(A, B, O)
-	bet = beta(A, B, O)
+				A, B = baum_welch(A, B, O)
 
-	print(alph.T)
-	print(bet.T)
-
-	T = len(O)
-	num_states, num_obs = B.shape
-
-	#print(xi(A, B, alph, bet, prob_obs, O))
-	#print(baum_welch(A,B,O))
+	return A, B
 
 
 
