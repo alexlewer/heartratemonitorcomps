@@ -31,51 +31,52 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
     }
     
-    let SCREEN_UPDATE_INTERVAL = 1.5
+    let SCREEN_UPDATE_INTERVAL = 1.5 // How often we update the heart rate displayed on screen
     
     var startTime = TimeInterval()
     
     var captureDevice : AVCaptureDevice?
     var session : AVCaptureSession?
     
-    var camCovered = false
-    var lapsing = false;
+    var camCovered = false // is the camera covered?
+    var lapsing = false; // is the camera not covered, but it's been less than a second?
     
+    // Parameters for camera cover algorithm
     let MAX_LUMA_MEAN = Double(100)
     let MIN_LUMA_MEAN = Double(60)
     let MAX_LUMA_STD_DEV = Double(20)
     
-    var stateQueue : YChannelStateQueue = YChannelStateQueue()
-    var heartRates : [Int] = [Int]()
-    var brightnessDerivatives : [Int] = [Int]()
+    var stateQueue : YChannelStateQueue = YChannelStateQueue() // holds observations in order to calculate general derivative of brightness
+    var brightnessDerivatives : [Int] = [Int]() // brightness derivatives origininating from YChannelStateQueue. The observations for our HMM
+    var derivativeTimes : [Double] = [Double]() // timestamps for brightnessDerivatives. 1-to-1 correspondence between the two arrays.
     
-    var obsTime : [Double] = [Double]()
-    var beginningTime : Double = 0
+    var beginningTime : Double = 0 // Beginning of last heart rate cycle
+    
+    // For heuristics and heart rate calculation
     var stateCount : Int = 0
     var bpmRecords : [Int] = [0,0,0,0,0,0]
     var HRCount : Int = 0
     var isFirstHR : Bool = true
     var lastCalculated : Date = Date()
-    
     var previousBPM : Int = 0
-    
     var camCoverStartTime : Double = 0
     var camCoverStartIndex : Int = 0
     var needToFindNextPeak : Bool = false
     var nextPeakIndex : Int = 0
     var tempObservation : [Int] = [Int]()
     var tempObsTime : [Double] = [Double]()
-    
-    var currentBPM : Int = 0
-    var uiTimer : Timer = Timer()
-    
     var previousMeasuredBPM : Int = 0
+
     
+    var currentBPM : Int = 0 // Master variable dictating what will be displayed
+    var bpmTimer : Timer = Timer() // Controls when to update BPM displayed on screen
+    
+    
+    // Initalizes state that must be reset when "STOP" is pressed or the app is loaded/navigated to.
     func initialize() {
         stateQueue = YChannelStateQueue()
-        heartRates = [Int]()
         brightnessDerivatives = [Int]()
-        obsTime = [Double]()
+        derivativeTimes = [Double]()
         bpmRecords = [0,0,0,0,0,0]
         HRCount = 0
         isFirstHR = true
@@ -111,6 +112,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
     }
     
+    // Update the screen with the current BPM
     func updateDisplayedBPM() {
         if self.currentBPM != 0 {
             DispatchQueue.main.async {
@@ -141,16 +143,16 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             hint1.text = "Waiting for signal."
             hint2.text = "Please cover the camera with your finger."
             startCameraProcesses()
-            uiTimer = Timer.scheduledTimer(timeInterval: SCREEN_UPDATE_INTERVAL, target: self, selector: #selector(ViewController.updateDisplayedBPM), userInfo: nil, repeats: true)
+            bpmTimer = Timer.scheduledTimer(timeInterval: SCREEN_UPDATE_INTERVAL, target: self, selector: #selector(ViewController.updateDisplayedBPM), userInfo: nil, repeats: true)
         }
         else {
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_inactive")
-            uiTimer.invalidate()
+            bpmTimer.invalidate()
             // End camera processes
             session!.stopRunning()
             toggleFlashlight()
-            
+            initialize()
             timer.invalidate()
             button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
             button.setTitle("START", for: UIControlState.normal)
@@ -182,7 +184,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
     }
     
-    
+    // Initialize objects for using camera
     func startCameraProcesses() {
         captureDevice = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) as AVCaptureDevice
         session = AVCaptureSession()
@@ -218,8 +220,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             startTime = NSDate.timeIntervalSinceReferenceDate
         }
         else {
-            initialize()
-            timer.invalidate()
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_normal")
             hint1.text = "Waiting for signal."
@@ -379,8 +379,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         for i in 0..<states.count{
             if (states[i]==0 && previous == 3) {
-                if beginningTime != nil {
-                    interval = (obsTime[i]) - beginningTime
+                if beginningTime != 0 {
+                    interval = (derivativeTimes[i]) - beginningTime
                     validBPM = Int(60 / interval)
                     bpmRecords[HRCount % 6] = validBPM
                     if HRCount >= 6{
@@ -416,7 +416,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     HRCount = HRCount + 1
                 }
                 
-                beginningTime = obsTime[i]
+                beginningTime = derivativeTimes[i]
                 
             }
             
@@ -448,7 +448,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     for i in 0..<self.tempObservation.count {
                         if (((tempObsTime.last!) - (tempObsTime[self.tempObsTime.count - i - 1])) >= 1.0) {
                             self.brightnessDerivatives = self.brightnessDerivatives + tempObservation
-                            self.obsTime = self.obsTime + tempObsTime
+                            self.derivativeTimes = self.derivativeTimes + tempObsTime
                         } else {
                             self.tempObsTime.removeLast(i)
                             self.tempObservation.removeLast(i)
@@ -461,7 +461,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             self.camCoverStartTime = currentTime
             self.needToFindNextPeak = true
             if (self.brightnessDerivatives.count != 0){
-                if (((self.obsTime.last)! - (self.obsTime.first)!) >= 3.0){
+                if (((self.derivativeTimes.last)! - (self.derivativeTimes.first)!) >= 3.0){
                     self.calculate(states: self.viterbi(obs:self.brightnessDerivatives, trans:trans, emit:emit, states:states, initial:p).1)
                 }
             }
@@ -479,7 +479,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             }
             
             if (stateQueue.getState() != -1) {
-                obsTime.append(NSDate().timeIntervalSince1970)
+                derivativeTimes.append(NSDate().timeIntervalSince1970)
                 brightnessDerivatives.append((stateQueue.getState()))
             }
             
