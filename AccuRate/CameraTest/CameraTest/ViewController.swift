@@ -31,6 +31,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
     }
     
+    let SCREEN_UPDATE_INTERVAL = 1.5
+    
     var startTime = TimeInterval()
     
     var captureDevice : AVCaptureDevice?
@@ -47,7 +49,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     var stateQueue : YChannelStateQueue?
     var heartRates : [Int]?
-    var observation : [Int]?
+    var brightnessDerivatives : [Int]?
     
     var obsTime : [Double]?
     var beginningTime : Double?
@@ -70,10 +72,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var tempBrightness : [Double]?
     var previousMaxBrightness : Double?
     
+    var currentBPM : Int?
+    var uiTimer : Timer?
+    
+    var previousMeasuredBPM : Int?
+    
     func initialize() {
         stateQueue = YChannelStateQueue()
         heartRates = [Int]()
-        observation = [Int]()
+        brightnessDerivatives = [Int]()
         brightnesses = [Double]()
         obsTime = [Double]()
         previousBrightnessDifference = -1
@@ -88,7 +95,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         tempObsTime = []
         tempBrightness = []
         previousMaxBrightness = -1.0
-
+        currentBPM = 0
+        previousMeasuredBPM = 0
     }
     
     func displayHeart(imageName: String) {
@@ -114,6 +122,26 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
     }
     
+    func updateDisplayedBPM() {
+        if self.currentBPM! != 0 {
+            DispatchQueue.main.async {
+                self.BPMText.text = String(self.currentBPM!) + " BPM"
+                if self.currentBPM! > 100 {
+                    self.BPMText.frame.size.width = 190
+                    self.heartView.removeFromSuperview()
+                    self.displayHeart(imageName: "Heart_normal")
+                    self.pulse(imageView: self.heartView, interval: 0.5)
+                }
+                else {
+                    self.BPMText.frame.size.width = 160
+                    self.heartView.removeFromSuperview()
+                    self.displayHeart(imageName: "Heart_normal")
+                    self.pulse(imageView: self.heartView, interval: 1)
+                }
+            }
+        }
+    }
+    
     @IBAction func start(sender: AnyObject) {
         if button.currentTitle == "START" {
             heartView.image = UIImage(named: "Heart_normal")
@@ -124,11 +152,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             hint1.text = "Waiting for signal."
             hint2.text = "Please cover the camera with your finger."
             startCameraProcesses()
+            uiTimer = Timer.scheduledTimer(timeInterval: SCREEN_UPDATE_INTERVAL, target: self, selector: #selector(ViewController.updateDisplayedBPM), userInfo: nil, repeats: true)
         }
         else {
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_inactive")
-            
+            uiTimer?.invalidate()
             // End camera processes
             session!.stopRunning()
             toggleFlashlight()
@@ -235,12 +264,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         let mean = detectFingerCoverage(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
         
-//        if self.camCovered {
-//            useCaptureOutputForHeartRateEstimation(mean: mean, bytesPerRow: bytesPerRow)
-//        }
-        useCaptureOutputForHeartRateEstimation(mean: mean, bytesPerRow: bytesPerRow)
-        // Compute mean and standard deviation of pixel luma values
-        
+        if self.camCovered {
+            useCaptureOutputForHeartRateEstimation(mean: mean, bytesPerRow: bytesPerRow)
+        }
     }
     
     func getMeanAndStdDev(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) -> (Double, Double){
@@ -313,7 +339,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     //****************** Viterbi and heart rate estimation *********************
     
     func viterbi(obs:Array<Int>, trans:Array<Array<Double>>, emit:Array<Array<Double>>, states: Array<Int>, initial:Array<Double>)->(Double, [Int]){
-        
         var vit = [[Int:Double]()]
         var path = [Int:[Int]]()
         
@@ -343,7 +368,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 
             }
             path = newPath
-            
         }
         let len = obs.count - 1
         var bestState:Int?
@@ -359,12 +383,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     }
   
     func calculate(states:Array<Int>, brightnesses: [Double]){
-        print("STATES:",states)
         var previous = (states[0], brightnesses[0])
-        var BPMNumber = 0
+        var validBPM = 0
         var tempBPM = 0
         var interval = 0.0
-        var brightnessDifference: Double = -1
+        var brightnessDifference = Double(-1)
         
         for i in 0..<states.count{
             if states[i] == 3 && previous.0 == 2 {
@@ -372,23 +395,17 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 if previousBrightnessDifference == -1 {
                     previousBrightnessDifference = brightnessDifference
                 }
-
-                print("brightness difference:",abs(previous.1-brightnesses[i]))
             }
             if (states[i]==0 && previous.0 == 3) {
                 if beginningTime != nil {
-                    
                     interval = (obsTime?[i])! - beginningTime!
-                    print("interval", interval)
-                    BPMNumber = Int(60 / interval)
-                    bpmRecords?[HRCount! % 6] = BPMNumber
+                    validBPM = Int(60 / interval)
+                    bpmRecords?[HRCount! % 6] = validBPM
                     if HRCount! >= 6{
-                        print("bpm",bpmRecords)
-                        tempBPM = (BPMNumber + previousBPM!)/2
+                        tempBPM = (validBPM + previousBPM!)/2
                         var avg:Double = 0
                         var sum:Double = 0
                         var tempRecords = bpmRecords?.sorted()
-                        print("bpm",tempRecords)
                         for k in 1..<5{
                             sum = sum + Double((tempRecords?[k])!)
                         }
@@ -403,48 +420,24 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                             usefulEnds += 1
                         }
                         avg = sum / Double(4 + usefulEnds)
-//                        if (previousBrightnessDifference!*3 > brightnessDifference) && (brightnessDifference > previousBrightnessDifference! /3)
                         if (abs(tempBPM - Int(avg)) <= 10)
                             && (tempBPM >= 30) && (tempBPM <= 300) {
                             previousBPM = tempBPM
-                            BPMNumber = ((tempRecords?[2])!+(tempRecords?[3])!+tempBPM) / 3
+                            validBPM = ((tempRecords?[2])!+(tempRecords?[3])!+tempBPM) / 3
                         } else {
-                            BPMNumber = Int(avg)
+                            validBPM = Int(avg)
                         }
-
-                        print("record", bpmRecords, " currentBPM1", BPMNumber, " mean1", tempBPM, "prev", previousBPM, "avg", avg)
-                        DispatchQueue.main.async {
-                            self.BPMText.text = String(BPMNumber) + " BPM"
-                            
-                            if BPMNumber > 100 {
-                                self.BPMText.frame.size.width = 190
-                                self.heartView.removeFromSuperview()
-                                self.displayHeart(imageName: "Heart_normal")
-                                self.pulse(imageView: self.heartView, interval: 0.5)
-                            }
-                            else {
-                                self.BPMText.frame.size.width = 160
-                                self.heartView.removeFromSuperview()
-                                self.displayHeart(imageName: "Heart_normal")
-                                self.pulse(imageView: self.heartView, interval: 1)
-                            }
-                        }
-
-                        
-                        
+                        self.currentBPM = validBPM
                     } else{
-                        previousBPM = BPMNumber
+                        previousBPM = validBPM
                     }
-                    
-                    
                     HRCount = HRCount! + 1
-                    
                 }
-                
+    
                 beginningTime = obsTime?[i]
-            
+                
             }
-
+            
             previous = (states[i], brightnesses[i])
             previousBrightnessDifference = brightnessDifference
         }
@@ -476,7 +469,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     if (((tempObsTime?.last!)! - (tempObsTime?.first!)!) >= 2.0) {
                         for i in 0..<self.tempObservation!.count {
                             if (((tempObsTime?.last!)! - (tempObsTime?[self.tempObsTime!.count - i - 1])!) >= 1.0) {
-                                self.observation? = self.observation! + tempObservation!
+                                self.brightnessDerivatives? = self.brightnessDerivatives! + tempObservation!
                                 self.obsTime? = self.obsTime! + tempObsTime!
                                 self.brightnesses? = self.brightnesses! + tempBrightness!
                             } else {
@@ -488,7 +481,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                                 }
                             }
                         }
-                        
                     }
                     tempObsTime = []
                     tempObservation = []
@@ -496,12 +488,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 }
                 self.camCoverStartTime = currentTime
                 self.needToFindNextPeak = true
-                if (self.observation?.count != 0){
+                if (self.brightnessDerivatives?.count != 0){
                     if (((self.obsTime?.last)! - (self.obsTime?.first)!) >= 3.0){
-                        self.calculate(states: self.viterbi(obs:self.observation!, trans:trans, emit:emit, states:states, initial:p).1, brightnesses: brightnesses!)
-//                        observation!.removeAll()
-//                        brightnesses?.removeAll()
-//                        obsTime!.removeAll()
+                        self.calculate(states: self.viterbi(obs:self.brightnessDerivatives!, trans:trans, emit:emit, states:states, initial:p).1, brightnesses: brightnesses!)
                     }
                 }
             }
@@ -525,43 +514,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             if (stateQueue?.getState().0 != -1) {
                 obsTime!.append(NSDate().timeIntervalSince1970)
                 brightnesses!.append((stateQueue?.getState().1)!)
-                observation!.append((stateQueue?.getState())!.0)
+                brightnessDerivatives!.append((stateQueue?.getState())!.0)
             }
             
-        }
-        
-
-        
-
-    }
-
-    func writeCSV(){
-        let fileName = "data.csv"
-        let path = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
-        var csvText = "Observation,State\n"
-        // What to write?
-        do {
-            try csvText.write(to: path!, atomically: true, encoding: String.Encoding.utf8)
-        } catch {
-            print("Failed to create file")
-        }
-        
-        if MFMailComposeViewController.canSendMail() {
-            let emailController = MFMailComposeViewController()
-            emailController.mailComposeDelegate = self
-            emailController.setToRecipients([])
-            emailController.setSubject("Our CSV Data")
-            emailController.setMessageBody("Please see the attachment!", isHTML: false)
-            do {
-                try emailController.addAttachmentData(Data(contentsOf: path!), mimeType: "text/csv", fileName: "data.csv")
-            } catch {
-                print("Failed to add attachment")
-            }
-            present(emailController, animated: true, completion: nil)
-        }
-        
-        func mailComposeController(controller: MFMailComposeViewController, didFinishWithResult result: MFMailComposeResult, error: NSError?) {
-            controller.dismiss(animated: true, completion: nil)
         }
     }
 }
