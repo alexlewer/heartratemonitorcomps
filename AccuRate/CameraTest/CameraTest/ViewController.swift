@@ -52,24 +52,23 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var obsTime : [Double]?
     var beginningTime : Double?
     var stateCount : Int?
-    var bpmRecords:[Int] = [0,0,0,0,0,0]
-    var HRCount:Int = 0
-    var isFirstHR:Bool = true
+    var bpmRecords : [Int]?
+    var HRCount : Int?
+    var isFirstHR:Bool?
     var lastCalculated : Date?
     
-    var previousBPM:Int = 0
+    var previousBPM: Int?
     var previousBrightnessDifference : Double?
     
-    var previousCover = false
-    var camCoverStartTime : Double = 0.0
-    var camCoverStartIndex:Int = 0
-    var needToFindNextPeak = false
-    var nextPeakIndex:Int = 0
-    var tempObservation : [Int] = []
-    var tempObsTime : [Double] = []
-    var tempBrightness : [Double] = []
-    var previousMaxBrightness : Double = -1.0
-//    var previousBPM_weighted:Int = 0
+    var previousCover : Bool?
+    var camCoverStartTime : Double?
+    var camCoverStartIndex : Int?
+    var needToFindNextPeak : Bool?
+    var nextPeakIndex : Int?
+    var tempObservation : [Int]?
+    var tempObsTime : [Double]?
+    var tempBrightness : [Double]?
+    var previousMaxBrightness : Double?
     
     func initialize() {
         stateQueue = YChannelStateQueue()
@@ -78,6 +77,18 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         brightnesses = [Double]()
         obsTime = [Double]()
         previousBrightnessDifference = -1
+        bpmRecords = [0,0,0,0,0,0]
+        HRCount = 0
+        isFirstHR = true
+        previousBPM = 0
+        previousCover = false
+        camCoverStartTime = 0.0
+        nextPeakIndex = 0
+        tempObservation = []
+        tempObsTime = []
+        tempBrightness = []
+        previousMaxBrightness = -1.0
+
     }
     
     func displayHeart(imageName: String) {
@@ -370,25 +381,25 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     interval = (obsTime?[i])! - beginningTime!
                     print("interval", interval)
                     BPMNumber = Int(60 / interval)
-                    bpmRecords[HRCount % 6] = BPMNumber
-                    if HRCount >= 6{
+                    bpmRecords?[HRCount! % 6] = BPMNumber
+                    if HRCount! >= 6{
                         print("bpm",bpmRecords)
-                        tempBPM = (BPMNumber + previousBPM)/2
+                        tempBPM = (BPMNumber + previousBPM!)/2
                         var avg:Double = 0
                         var sum:Double = 0
-                        var tempRecords = bpmRecords.sorted()
+                        var tempRecords = bpmRecords?.sorted()
                         print("bpm",tempRecords)
                         for k in 1..<5{
-                            sum = sum + Double(tempRecords[k])
+                            sum = sum + Double((tempRecords?[k])!)
                         }
                         avg = sum/4
                         var usefulEnds:Int = 0
-                        if abs(Double(tempRecords[0]) - avg)<=10{
-                            sum = sum + Double(tempRecords[0])
+                        if abs(Double((tempRecords?[0])!) - avg)<=10{
+                            sum = sum + Double((tempRecords?[0])!)
                             usefulEnds += 1
                         }
-                        if abs(Double(tempRecords[5]) - avg)<=10{
-                            sum = sum + Double(tempRecords[5])
+                        if abs(Double((tempRecords?[5])!) - avg)<=10{
+                            sum = sum + Double((tempRecords?[5])!)
                             usefulEnds += 1
                         }
                         avg = sum / Double(4 + usefulEnds)
@@ -396,7 +407,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         if (abs(tempBPM - Int(avg)) <= 10)
                             && (tempBPM >= 30) && (tempBPM <= 300) {
                             previousBPM = tempBPM
-                            BPMNumber = (tempRecords[2]+tempRecords[3]+tempBPM) / 3
+                            BPMNumber = ((tempRecords?[2])!+(tempRecords?[3])!+tempBPM) / 3
                         } else {
                             BPMNumber = Int(avg)
                         }
@@ -426,7 +437,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     }
                     
                     
-                    HRCount += 1
+                    HRCount = HRCount! + 1
                     
                 }
                 
@@ -459,21 +470,21 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             let pixels = 1080 * bytesPerRow
             let value = mean/Double(pixels)
             stateQueue?.addValue(value: value)
-            if (!self.previousCover) {
-                if (self.tempObservation.count != 0){
+            if (!self.previousCover!) {
+                if (self.tempObservation?.count != 0){
                     var maxBrightness = -1.0
-                    if ((tempObsTime.last! - tempObsTime.first!) >= 2.0) {
-                        for i in 0..<self.tempObservation.count {
-                            if ((tempObsTime.last! - tempObsTime[self.tempObsTime.count - i - 1]) >= 1.0) {
-                                self.observation? += tempObservation
-                                self.obsTime? += tempObsTime
-                                self.brightnesses? += tempBrightness
+                    if (((tempObsTime?.last!)! - (tempObsTime?.first!)!) >= 2.0) {
+                        for i in 0..<self.tempObservation!.count {
+                            if (((tempObsTime?.last!)! - (tempObsTime?[self.tempObsTime!.count - i - 1])!) >= 1.0) {
+                                self.observation? = self.observation! + tempObservation!
+                                self.obsTime? = self.obsTime! + tempObsTime!
+                                self.brightnesses? = self.brightnesses! + tempBrightness!
                             } else {
-                                if (maxBrightness < tempBrightness[self.tempObsTime.count - i - 1]) {
-                                    self.tempBrightness.removeLast(i)
+                                if (maxBrightness < (tempBrightness?[(self.tempObsTime?.count)! - i - 1])!) {
+                                    self.tempBrightness?.removeLast(i)
                     
-                                    self.tempObsTime.removeLast(i)
-                                    self.tempObservation.removeLast(i)
+                                    self.tempObsTime?.removeLast(i)
+                                    self.tempObservation?.removeLast(i)
                                 }
                             }
                         }
@@ -494,18 +505,18 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     }
                 }
             }
-            self.tempObservation.append((stateQueue?.getState())!.0)
-            self.tempBrightness.append((stateQueue?.getState())!.1)
-            self.tempObsTime.append(currentTime)
-            if (needToFindNextPeak) {
-                if ((currentTime - self.camCoverStartTime) >= 1.0) {
+            self.tempObservation!.append((stateQueue?.getState())!.0)
+            self.tempBrightness!.append((stateQueue?.getState())!.1)
+            self.tempObsTime!.append(currentTime)
+            if (needToFindNextPeak!) {
+                if ((currentTime - self.camCoverStartTime!) >= 1.0) {
                     self.needToFindNextPeak = false
                 } else {
-                    if (self.previousMaxBrightness < tempBrightness.last!) {
-                        self.previousMaxBrightness = tempBrightness.last!
-                        tempObsTime = [tempObsTime.last!]
-                        tempObservation = [tempObservation.last!]
-                        tempBrightness = [tempBrightness.last!]
+                    if (self.previousMaxBrightness! < (tempBrightness?.last!)!) {
+                        self.previousMaxBrightness! = (tempBrightness?.last!)!
+                        tempObsTime = [(tempObsTime?.last!)!]
+                        tempObservation = [(tempObservation?.last!)!]
+                        tempBrightness = [(tempBrightness?.last!)!]
                     }
                 }
 
