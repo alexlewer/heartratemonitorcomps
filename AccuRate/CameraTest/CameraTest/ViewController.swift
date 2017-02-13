@@ -463,37 +463,32 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             let pixels = 1080 * bytesPerRow
             let value = mean/Double(pixels)
             stateQueue?.addValue(value: value)
-            if (!self.previousCover!) {
-                if (self.tempObservation?.count != 0){
-                    var maxBrightness = -1.0
-                    if (((tempObsTime?.last!)! - (tempObsTime?.first!)!) >= 2.0) {
-                        for i in 0..<self.tempObservation!.count {
-                            if (((tempObsTime?.last!)! - (tempObsTime?[self.tempObsTime!.count - i - 1])!) >= 1.0) {
-                                self.brightnessDerivatives? = self.brightnessDerivatives! + tempObservation!
-                                self.obsTime? = self.obsTime! + tempObsTime!
-                                self.brightnesses? = self.brightnesses! + tempBrightness!
-                            } else {
-                                if (maxBrightness < (tempBrightness?[(self.tempObsTime?.count)! - i - 1])!) {
-                                    self.tempBrightness?.removeLast(i)
-                    
-                                    self.tempObsTime?.removeLast(i)
-                                    self.tempObservation?.removeLast(i)
-                                }
-                            }
+            if (self.tempObservation?.count != 0){
+                if (((tempObsTime?.last!)! - (tempObsTime?.first!)!) >= 2.0) {
+                    for i in 0..<self.tempObservation!.count {
+                        if (((tempObsTime?.last!)! - (tempObsTime?[self.tempObsTime!.count - i - 1])!) >= 1.0) {
+                            self.brightnessDerivatives? = self.brightnessDerivatives! + tempObservation!
+                            self.obsTime? = self.obsTime! + tempObsTime!
+                            self.brightnesses? = self.brightnesses! + tempBrightness!
+                        } else {
+                            self.tempBrightness?.removeLast(i)
+                            self.tempObsTime?.removeLast(i)
+                            self.tempObservation?.removeLast(i)
                         }
                     }
-                    tempObsTime = []
-                    tempObservation = []
-                    tempBrightness = []
                 }
-                self.camCoverStartTime = currentTime
-                self.needToFindNextPeak = true
-                if (self.brightnessDerivatives?.count != 0){
-                    if (((self.obsTime?.last)! - (self.obsTime?.first)!) >= 3.0){
-                        self.calculate(states: self.viterbi(obs:self.brightnessDerivatives!, trans:trans, emit:emit, states:states, initial:p).1, brightnesses: brightnesses!)
-                    }
+                tempObsTime = []
+                tempObservation = []
+                tempBrightness = []
+            }
+            self.camCoverStartTime = currentTime
+            self.needToFindNextPeak = true
+            if (self.brightnessDerivatives?.count != 0){
+                if (((self.obsTime?.last)! - (self.obsTime?.first)!) >= 3.0){
+                    self.calculate(states: self.viterbi(obs:self.brightnessDerivatives!, trans:trans, emit:emit, states:states, initial:p).1, brightnesses: brightnesses!)
                 }
             }
+            
             self.tempObservation!.append((stateQueue?.getState())!.0)
             self.tempBrightness!.append((stateQueue?.getState())!.1)
             self.tempObsTime!.append(currentTime)
@@ -508,7 +503,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         tempBrightness = [(tempBrightness?.last!)!]
                     }
                 }
-
+                
             }
             
             if (stateQueue?.getState().0 != -1) {
