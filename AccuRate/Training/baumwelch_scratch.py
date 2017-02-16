@@ -4,6 +4,7 @@ import numpy as np
 import csv
 from DiscreteHMM import DiscreteHMM
 import sys
+import fancy_bw as fancy
 
 # calculate forward probability matrix
 def alpha(A, B, pi, observations):
@@ -141,32 +142,8 @@ def baum_welch(A, B, pi, observations):
 
 	return curA, curB, cur_pi
 
-def train(filepath):
-	#A = np.array([0.6794, 0.3206, 0.0, 0.0, \
-	#			  0.0, 0.5366, 0.4634, 0.0, \
-	#			  0.0, 0.0, 0.3485, 0.6516, \
-	#			  0.1508, 0.0, 0.0, 0.8492])
-
-	#B = np.array([0.6884, 0.0015, 0.3002, 0.0099, \
-	#			  0.0, 0.7205, 0.0102, 0.2694, \
-	#			  0.2894, 0.3731, 0.3362, 0.0023, \
-	#			  0.0005, 0.8440, 0.0021, 0.1534])
-
-	A = np.array([.5, .5, 0.0, 0.0, \
-				0.0, .5, .5, 0.0, \
-				0.0, 0.0, .5, .5, \
-				.5, 0.0, 0.0, .5])
-
-	B = np.array([.25, .25, .25, .25, \
-				.25, .25, .25, .25, \
-				.25, .25, .25, .25, \
-				.25, .25, .25, .25])
-
-	initial = [0.25, 0.20, 0.10, 0.45]
+def train(A, B, initial, filepath):
 	cur_pi = initial
-
-	A = A.reshape((-1,4))
-	B = B.reshape((-1,4))
 
 	with open(filepath, 'r') as file:
 		obs_files = file.readlines()
@@ -181,11 +158,6 @@ def train(filepath):
 					except ValueError:
 						pass
 
-				#pi = np.array([0.25, 0.20, 0.10, 0.45])
-				#hmm2 = DiscreteHMM(4,4,A,B,pi,init_type='user',precision=np.longdouble,verbose=True)
-				#print("His: ", hmm2.alpha(O))
-				#print("Ours: ", alpha(A, B, O).T)
-
 				A, B, cur_pi = baum_welch(A, B, cur_pi, O)
 
 	with open("results.txt", 'w') as file:
@@ -193,7 +165,75 @@ def train(filepath):
 		file.write(str(B))
 		file.write(str(cur_pi))
 
-	return A, B
+	return A, B, cur_pi
+
+def test(filepath):
+	#ourA = np.array([0.6794, 0.3206, 0.0, 0.0, \
+	#			  0.0, 0.5366, 0.4634, 0.0, \
+	#			  0.0, 0.0, 0.3485, 0.6516, \
+	#			  0.1508, 0.0, 0.0, 0.8492])
+
+	#ourB = np.array([0.6884, 0.0015, 0.3002, 0.0099, \
+	#			  0.0, 0.7205, 0.0102, 0.2694, \
+	#			  0.2894, 0.3731, 0.3362, 0.0023, \
+	#			  0.0005, 0.8440, 0.0021, 0.1534])
+
+	ourA = np.array([.5, .5, 0.0, 0.0, \
+				0.0, .5, .5, 0.0, \
+				0.0, 0.0, .5, .5, \
+				.5, 0.0, 0.0, .5])
+
+	ourB = np.array([.25, .25, .25, .25, \
+				.25, .25, .25, .25, \
+				.25, .25, .25, .25, \
+				.25, .25, .25, .25])
+
+	ourPi = [0.25, 0.20, 0.10, 0.45]
+
+	ourA = ourA.reshape((-1,4))
+	ourB = ourB.reshape((-1,4))
+
+	guyA, guyB, guyPi = np.zeros((4,4)), np.zeros((4,4)), []
+	guyA[:], guyB[:], guyPi[:] = ourA, ourB, ourPi
+	fancyA, fancyB, fancyPi = np.zeros((4,4)), np.zeros((4,4)), []
+	fancyA[:], fancyB[:], fancyPi[:] = ourA, ourB, ourPi
+
+	with open(filepath, 'r') as file:
+		obs_files = file.readlines()
+		for obs_filepath in obs_files:
+			print("Training on ", obs_filepath.rstrip())
+			with open(obs_filepath.rstrip(), 'r') as obs_file:
+				O = []
+				reader = csv.reader(obs_file)
+				for row in reader:
+					try:
+						O.append(int(row[2]))
+					except ValueError:
+						pass
+
+				print("Running our model...")
+				ourA, ourB, ourPi = baum_welch(ourA, ourB, ourPi, O)
+				
+				print("Running Guy's model...")
+				hmm2 = DiscreteHMM(4,4,guyA,guyB,guyPi,init_type='user',precision=np.longdouble,verbose=True)
+				hmm2.train(O, iterations=1000,epsilon=.00001)
+				guyA, guyB, guyPi = hmm2.A, hmm2.B, hmm2.pi
+
+				#print("Running fancy model...")
+				#fancyA, fancyB = fancy.baum_welch(fancyA, fancyB, fancyPi, np.array(O))
+
+	with open("results_alldata_vanillamatrices.txt", 'w') as file:
+		file.write("Our Results:\n")
+		file.write("A: " + str(ourA) + "\n")
+		file.write("B: " + str(ourB) + "\n")
+		file.write("Pi: " + str(ourPi) +  "\n\n")
+		file.write("Guy's Results:\n")
+		file.write("A: " + str(guyA) + "\n")
+		file.write("B: " + str(guyB) + "\n")
+		file.write("Pi: " + str(guyPi) +  "\n\n")
+		#file.write("Fancy Results:\n")
+		#file.write("A: " + str(fancyA) + "\n")
+		#file.write("B: " + str(fancyB) + "\n")
 
 
 
