@@ -9,6 +9,7 @@ This code is based on:
 '''
 
 import numpy
+import sys
 
 class _BaseHMM(object):
     '''
@@ -175,7 +176,6 @@ class _BaseHMM(object):
                     thing *= self.B_map[j][t+1]
                     thing *= beta[t+1][j]
                     denom += thing
-            print(denom)
             for i in range(self.n):
                 for j in range(self.n):
                     numer = 1.0
@@ -222,11 +222,17 @@ class _BaseHMM(object):
             prob_old, prob_new = self.trainiter(observations)
 
             if (self.verbose):      
-                print("iter: ", i, ", L(model|O) =", prob_old, ", L(model_new|O) =", prob_new, ", converging =", ( prob_new-prob_old > thres ))
+                #print("iter: ", i, ", L(model|O) =", prob_old, ", L(model_new|O) =", prob_new, ", converging =", ( prob_new-prob_old > thres ))
+                print(".",end='')
+                sys.stdout.flush()
                 
             if ( abs(prob_new-prob_old) < epsilon ):
                 # converged
                 break
+
+        if (self.verbose):
+            print(i, " iterations.")
+
                 
     def _updatemodel(self,new_model):
         '''

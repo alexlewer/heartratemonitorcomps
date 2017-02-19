@@ -198,11 +198,11 @@ def test(filepath):
 	fancyA, fancyB, fancyPi = np.zeros((4,4)), np.zeros((4,4)), []
 	fancyA[:], fancyB[:], fancyPi[:] = ourA, ourB, ourPi
 
-	with open(filepath, 'r') as file:
+	with open("data/" + filepath, 'r') as file:
 		obs_files = file.readlines()
 		for obs_filepath in obs_files:
 			print("Training on ", obs_filepath.rstrip())
-			with open(obs_filepath.rstrip(), 'r') as obs_file:
+			with open("data/" + obs_filepath.rstrip(), 'r') as obs_file:
 				O = []
 				reader = csv.reader(obs_file)
 				for row in reader:
