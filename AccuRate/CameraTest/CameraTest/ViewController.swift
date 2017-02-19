@@ -328,6 +328,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     //****************** Viterbi and heart rate estimation *********************
     
     func viterbi(obs:Array<Int>, trans:Array<Array<Double>>, emit:Array<Array<Double>>, states: Array<Int>, initial:Array<Double>)->(Double, [Int]){
+        
         var vit = [[Int:Double]()]
         var path = [Int:[Int]]()
         
@@ -388,6 +389,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         var avg:Double = 0
                         var sum:Double = 0
                         var tempRecords = bpmRecords.sorted()
+                        print("array: ", tempRecords)
                         for k in 1..<5{
                             sum = sum + Double((tempRecords[k]))
                         }
@@ -402,16 +404,22 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                             usefulEnds += 1
                         }
                         avg = sum / Double(4 + usefulEnds)
-                        if (abs(tempBPM - Int(avg)) <= 10)
+                        print("previous: ", previousBPM, " avg: ", avg)
+                        if (abs(tempBPM - previousBPM) <= 10)
                             && (tempBPM >= 30) && (tempBPM <= 300) {
-                            previousBPM = tempBPM
                             validBPM = ((tempRecords[2])+(tempRecords[3])+tempBPM) / 3
+                            previousBPM = validBPM
+                            self.currentBPM = validBPM
                         } else {
                             validBPM = Int(avg)
                         }
-                        self.currentBPM = validBPM
+                        
+                        print("we choose: ", currentBPM)
                     } else{
-                        previousBPM = validBPM
+                        if ((30<=validBPM)&&(validBPM<=300)){
+                            previousBPM = validBPM
+                        }
+                        
                     }
                     HRCount = HRCount + 1
                 }
@@ -419,6 +427,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 beginningTime = derivativeTimes[i]
                 
             }
+            
             
             previous = states[i]
         }
@@ -462,6 +471,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             self.needToFindNextPeak = true
             if (self.brightnessDerivatives.count != 0){
                 if (((self.derivativeTimes.last)! - (self.derivativeTimes.first)!) >= 3.0){
+                    if (((self.derivativeTimes.last)! - (self.derivativeTimes.first)!) >= 20){
+                        let temp1 = self.brightnessDerivatives[200..<self.brightnessDerivatives.count]
+                        self.brightnessDerivatives = Array(temp1)
+                        let temp2 = self.derivativeTimes[200..<self.derivativeTimes.count]
+                        self.derivativeTimes = Array(temp2)
+                        
+                    }
                     self.calculate(states: self.viterbi(obs:self.brightnessDerivatives, trans:trans, emit:emit, states:states, initial:p).1)
                 }
             }
