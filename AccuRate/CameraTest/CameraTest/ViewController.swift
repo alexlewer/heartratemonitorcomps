@@ -383,7 +383,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 if beginningTime != 0 {
                     interval = (derivativeTimes[i]) - beginningTime
                     validBPM = Int(60 / interval)
-                    bpmRecords[HRCount % 6] = validBPM
+                    if ((validBPM > 30) && (validBPM < 300)) || HRCount == 0{
+
+                        bpmRecords[HRCount % 6] = validBPM
+                    } else {
+                        bpmRecords[HRCount % 6] = bpmRecords[(HRCount-1) % 6]
+                    }
+//                    bpmRecords[HRCount % 6] = validBPM
                     if HRCount >= 6{
                         tempBPM = (validBPM + previousBPM)/2
                         var avg:Double = 0
@@ -407,12 +413,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         print("previous: ", previousBPM, " avg: ", avg)
                         if (abs(tempBPM - previousBPM) <= 10)
                             && (tempBPM >= 30) && (tempBPM <= 300) {
-                            validBPM = ((tempRecords[2])+(tempRecords[3])+tempBPM) / 3
-                            previousBPM = validBPM
-                            self.currentBPM = validBPM
+                            validBPM = (((tempRecords[2])+(tempRecords[3])+tempBPM) / 3 + previousBPM) / 2
+                            
+                            
                         } else {
                             validBPM = Int(avg)
                         }
+                        previousBPM = validBPM
+                        self.currentBPM = validBPM
                         
                         print("we choose: ", currentBPM)
                     } else{
