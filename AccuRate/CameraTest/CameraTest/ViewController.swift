@@ -467,29 +467,31 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
 //        let p = [0.25, 0.20, 0.10, 0.45]
         
         // our matrices (with BayesHeart as initial)
-//        let trans = [[0.81196025,  0.18803975,  0.0,  0.0],
-//            [ 0.0,  0.0,  1.0,  0.0],
-//            [ 0.0,  0.0,  0.38188347,  0.61811653],
-//            [ 1.0,  0.0,  0.0,  0.0]]
-//        
-//        let emit = [[ 0.86449806,  0.0023080861,  0.066598702,  0.066595155],
-//            [ 0.0,  0.016592151,  0.98340785,  0.0],
-//            [ 0.0,  1.0,  0.0,  0.0],
-//            [ 0.0,  0.016573281,  0.0,  0.98342672]]
-        
-        // Trained from vanilla
-        let trans = [[ 0.73051926,  0.26948074,  0.0,  0.0],
+        let trans = [[0.81196025,  0.18803975,  0.0,  0.0],
             [ 0.0,  0.0,  1.0,  0.0],
-            [ 0.0,  0.0,  0.47706229,  0.52293771],
+            [ 0.0,  0.0,  0.38188347,  0.61811653],
             [ 1.0,  0.0,  0.0,  0.0]]
         
-        let emit = [[ 1.0,  0.0,  0.0,  0.0],
-            [ 0.084427546,  0.0,  0.91557245,  0.0],
-            [ 0.019529611,  0.74125375,  0.1181616,  0.12105504],
-            [ 0.091452405,  0.0,  0.0,  0.9085476]]
+        let emit = [[ 0.86449806,  0.0023080861,  0.066598702,  0.066595155],
+            [ 0.0,  0.016592151,  0.98340785,  0.0],
+            [ 0.0,  1.0,  0.0,  0.0],
+            [ 0.0,  0.016573281,  0.0,  0.98342672]]
         
+        let p = [1.0, 0.0, 0.0, 0.0]
         
-        let p = [ 0.0,  0.0,  1.0,  0.0]
+        // Trained from vanilla
+//        let trans = [[ 0.73051926,  0.26948074,  0.0,  0.0],
+//            [ 0.0,  0.0,  1.0,  0.0],
+//            [ 0.0,  0.0,  0.47706229,  0.52293771],
+//            [ 1.0,  0.0,  0.0,  0.0]]
+//        
+//        let emit = [[ 1.0,  0.0,  0.0,  0.0],
+//            [ 0.084427546,  0.0,  0.91557245,  0.0],
+//            [ 0.019529611,  0.74125375,  0.1181616,  0.12105504],
+//            [ 0.091452405,  0.0,  0.0,  0.9085476]]
+//        
+//        
+//        let p = [ 0.0,  0.0,  1.0,  0.0]
         
         if (self.camCovered) {
             let pixels = 1080 * bytesPerRow
@@ -514,7 +516,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             self.needToFindNextPeak = true
             if (self.brightnessDerivatives.count != 0){
                 if (((self.derivativeTimes.last)! - (self.derivativeTimes.first)!) >= 3.0){
-                    if (((self.derivativeTimes.last)! - (self.derivativeTimes.first)!) >= 20){
+                    if (((self.derivativeTimes.last)! - (self.derivativeTimes.first)!) >= 20 && self.brightnessDerivatives.count > 200 && self.derivativeTimes.count > 200){
                         let temp1 = self.brightnessDerivatives[200..<self.brightnessDerivatives.count]
                         self.brightnessDerivatives = Array(temp1)
                         let temp2 = self.derivativeTimes[200..<self.derivativeTimes.count]
