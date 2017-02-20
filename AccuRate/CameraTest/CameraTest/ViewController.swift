@@ -346,6 +346,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 var bestState : Int = 0
                 
                 for state2 in states{
+                    if vit[i-1][state2] == nil {
+                        vit[i-1][state2] = 0.0
+                    }
+//                    print("vit[i-1][state2]! * trans[state2][state1]:", vit[i-1][state2]! * trans[state2][state1])
                     let transProb = vit[i-1][state2]! * trans[state2][state1]
                     if transProb > transMax{
                         transMax = transProb
@@ -363,6 +367,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         var bestState:Int = 0
         var maxProb = DBL_MIN
         for state in states{
+            if vit[len][state] == nil {
+                vit[len][state] = 0.0
+            }
             if vit[len][state]! > maxProb{
                 maxProb = vit[len][state]!
                 bestState = state
@@ -444,17 +451,45 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     func useCaptureOutputForHeartRateEstimation(mean: Double, bytesPerRow: Int) {
         let currentTime = NSDate().timeIntervalSince1970
-        let trans = [[0.6794, 0.3206, 0.0, 0.0],
-                     [0.0, 0.5366, 0.4634, 0.0],
-                     [0.0, 0.0, 0.3485, 0.6516],
-                     [0.1508, 0.0, 0.0, 0.8492]]
-        
-        let emit = [[0.6884, 0.0015, 0.3002, 0.0099],
-                    [0.0, 0.7205, 0.0102, 0.2694],
-                    [0.2894, 0.3731, 0.3362, 0.0023],
-                    [0.0005, 0.8440, 0.0021, 0.1534]]
-        let p = [0.25, 0.20, 0.10, 0.45]
         let states = [0,1,2,3]
+
+        
+        // BayesHeart Matrices
+//        let trans = [[0.6794, 0.3206, 0.0, 0.0],
+//                     [0.0, 0.5366, 0.4634, 0.0],
+//                     [0.0, 0.0, 0.3485, 0.6516],
+//                     [0.1508, 0.0, 0.0, 0.8492]]
+//        
+//        let emit = [[0.6884, 0.0015, 0.3002, 0.0099],
+//                    [0.0, 0.7205, 0.0102, 0.2694],
+//                    [0.2894, 0.3731, 0.3362, 0.0023],
+//                    [0.0005, 0.8440, 0.0021, 0.1534]]
+//        let p = [0.25, 0.20, 0.10, 0.45]
+        
+        // our matrices (with BayesHeart as initial)
+//        let trans = [[0.81196025,  0.18803975,  0.0,  0.0],
+//            [ 0.0,  0.0,  1.0,  0.0],
+//            [ 0.0,  0.0,  0.38188347,  0.61811653],
+//            [ 1.0,  0.0,  0.0,  0.0]]
+//        
+//        let emit = [[ 0.86449806,  0.0023080861,  0.066598702,  0.066595155],
+//            [ 0.0,  0.016592151,  0.98340785,  0.0],
+//            [ 0.0,  1.0,  0.0,  0.0],
+//            [ 0.0,  0.016573281,  0.0,  0.98342672]]
+        
+        // Trained from vanilla
+        let trans = [[ 0.73051926,  0.26948074,  0.0,  0.0],
+            [ 0.0,  0.0,  1.0,  0.0],
+            [ 0.0,  0.0,  0.47706229,  0.52293771],
+            [ 1.0,  0.0,  0.0,  0.0]]
+        
+        let emit = [[ 1.0,  0.0,  0.0,  0.0],
+            [ 0.084427546,  0.0,  0.91557245,  0.0],
+            [ 0.019529611,  0.74125375,  0.1181616,  0.12105504],
+            [ 0.091452405,  0.0,  0.0,  0.9085476]]
+        
+        
+        let p = [ 0.0,  0.0,  1.0,  0.0]
         
         if (self.camCovered) {
             let pixels = 1080 * bytesPerRow
