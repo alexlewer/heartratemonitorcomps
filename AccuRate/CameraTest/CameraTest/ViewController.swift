@@ -9,6 +9,7 @@
 import UIKit
 import AVFoundation
 import MessageUI
+import HealthKit
 
 public extension UIView {
     func fadeIn(withDuration duration: TimeInterval = 1.0) {
@@ -396,7 +397,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     } else {
                         bpmRecords[HRCount % 6] = bpmRecords[(HRCount-1) % 6]
                     }
-//                    bpmRecords[HRCount % 6] = validBPM
+                    bpmRecords[HRCount % 6] = validBPM
                     if HRCount >= 6{
                         tempBPM = (validBPM + previousBPM)/2
                         var avg:Double = 0
@@ -406,7 +407,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         for k in 1..<5{
                             sum = sum + Double((tempRecords[k]))
                         }
-                        avg = sum/4
+                        avg = sum/3
                         var usefulEnds:Int = 0
                         if abs(Double((tempRecords[0])) - avg)<=10{
                             sum = sum + Double((tempRecords[0]))
@@ -430,6 +431,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         self.currentBPM = validBPM
                         
                         print("we choose: ", currentBPM)
+                        
+                        // Check if the standard deviation of bpm measurements is low
+                        // if so, stop and ask the user if they want to import to HealthKit
+                        
+                        let standardDeviation = self.calculateStandardDeviationOfRecords(records: tempRecords)
+                        if standardDeviation < 10 && HKHealthStore.isHealthDataAvailable() { // change to standard deviation condition later
+                            session!.stopRunning()
+                            self.showHeartRateMeasuredDialog(UIButton())
+                        }
                     } else{
                         if ((30<=validBPM)&&(validBPM<=300)){
                             previousBPM = validBPM
@@ -447,6 +457,58 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             previous = states[i]
         }
     }
+    
+    func calculateStandardDeviationOfRecords(records: [Int]) -> Double {
+        // Calculate standard deviation of measurements
+        var meanOfAllCurrentMeasurements = 0
+        for i in 0..<records.count {
+            meanOfAllCurrentMeasurements += records[i]
+        }
+        meanOfAllCurrentMeasurements = meanOfAllCurrentMeasurements/records.count
+        var standardDeviation : Double = 0
+        for i in 0..<records.count {
+            let squaredDiff = (Double(records[i]-meanOfAllCurrentMeasurements))*(Double(records[i]-meanOfAllCurrentMeasurements))
+            standardDeviation += squaredDiff
+        }
+        standardDeviation = sqrt(standardDeviation/Double(records.count))
+        
+        return standardDeviation
+    }
+    
+    @IBAction func showHeartRateMeasuredDialog(_ sender: UIButton) {
+        
+        // create the alert
+        let alert = UIAlertController(title: "Heart Rate Measured", message: "Your heart rate is" + String(self.currentBPM), preferredStyle: UIAlertControllerStyle.alert)
+        
+        // add an action (button)
+        alert.addAction(UIAlertAction(title: "Save", style: UIAlertActionStyle.default, handler: {action in self.saveHeartData(bpm: self.currentBPM)}))
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.cancel, handler: nil))
+
+        // show the alert
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    func saveHeartData(bpm : Int) {
+        let healthKitTypes: Set = [HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!]
+        let healthStore = HKHealthStore()
+        healthStore.requestAuthorization(toShare: healthKitTypes, read: nil) { (success, error) -> Void in }
+        
+        // 1. Create a heart rate BPM Sample
+        let heartRateType = HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!
+        let heartRateQuantity = HKQuantity(unit: HKUnit(from: "count/min"),
+                                           doubleValue: Double(bpm))
+        let heartSample = HKQuantitySample(type: heartRateType,
+                                           quantity: heartRateQuantity, start: NSDate() as Date, end: NSDate() as Date)
+        
+        // 2. Save the sample in the store
+        healthStore.save(heartSample, withCompletion: { (success, error) -> Void in
+            if let error = error {
+                print("Error saving heart sample: \(error.localizedDescription)")
+            }
+        })
+    }
+
     
     
     func useCaptureOutputForHeartRateEstimation(mean: Double, bytesPerRow: Int) {
