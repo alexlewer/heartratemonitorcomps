@@ -23,12 +23,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     var timer = Timer()
     
-    func pulse(imageView: UIImageView, interval: Double) {
-        let intv = DispatchTime.now() + interval
-        DispatchQueue.main.asyncAfter(deadline: intv) {
-            imageView.alpha = 0.5
-            imageView.fadeIn()
-            self.pulse(imageView: imageView, interval: interval)
+    func pulse() {
+        DispatchQueue.main.async {
+            self.heartView.alpha = 0.5
+            self.heartView.fadeIn()
         }
     }
     
@@ -71,6 +69,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     var currentBPM : Int = 0 // Master variable dictating what will be displayed
     var bpmTimer : Timer = Timer() // Controls when to update BPM displayed on screen
+    var pulseTimer : Timer = Timer() // Controls visual pulsing of heart UI element
     
     
     // Initalizes state that must be reset when "STOP" is pressed or the app is loaded/navigated to.
@@ -88,6 +87,31 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         tempObsTime = []
         currentBPM = 0
         previousMeasuredBPM = 0
+        startTime = TimeInterval()
+        timer = Timer()
+    }
+    
+    // Stops/resets all UI elements and reinitializes variables
+    func stop() {
+        bpmTimer.invalidate()
+        // End camera processes
+        toggleFlashlight()
+        session!.stopRunning()
+        timer.invalidate()
+        pulseTimer.invalidate()
+        
+        // Asynchronously update UI to initial state
+        DispatchQueue.main.async {
+            self.displayHeart(imageName: "Heart_inactive")
+            self.heartView.removeFromSuperview()
+            self.button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
+            self.button.setTitle("START", for: UIControlState.normal)
+            self.hint1.text = "Ready to start."
+            self.hint2.text = "Please hit the START button."
+            self.timerText.text = "00:00:00"
+            self.BPMText.frame.size.width = 175
+            self.BPMText.text = "- - - BPM"
+        }
     }
     
     func displayHeart(imageName: String) {
@@ -122,46 +146,38 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     self.BPMText.frame.size.width = 190
                     self.heartView.removeFromSuperview()
                     self.displayHeart(imageName: "Heart_normal")
-                    self.pulse(imageView: self.heartView, interval: 0.5)
+                    self.pulseTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
                 }
                 else {
                     self.BPMText.frame.size.width = 160
                     self.heartView.removeFromSuperview()
                     self.displayHeart(imageName: "Heart_normal")
-                    self.pulse(imageView: self.heartView, interval: 1)
+                    self.pulseTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
                 }
             }
         }
     }
     
-    @IBAction func start(sender: AnyObject) {
+    func start() {
+        initialize()
+        heartView.image = UIImage(named: "Heart_normal")
+        heartView.alpha = 0.25
+        heartView.fadeIn()
+        button.setBackgroundImage(UIImage(named: "Button_stop"), for: UIControlState.normal)
+        button.setTitle("STOP", for: UIControlState.normal)
+        hint1.text = "Waiting for signal."
+        hint2.text = "Please cover the camera with your finger."
+        startCameraProcesses()
+        bpmTimer = Timer.scheduledTimer(timeInterval: SCREEN_UPDATE_INTERVAL, target: self, selector: #selector(ViewController.updateDisplayedBPM), userInfo: nil, repeats: true)
+        timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateTime), userInfo: nil, repeats: true)
+    }
+    
+    @IBAction func startStopButton(_ sender: AnyObject) {
         if button.currentTitle == "START" {
-            heartView.image = UIImage(named: "Heart_normal")
-            heartView.alpha = 0.25
-            heartView.fadeIn()
-            button.setBackgroundImage(UIImage(named: "Button_stop"), for: UIControlState.normal)
-            button.setTitle("STOP", for: UIControlState.normal)
-            hint1.text = "Waiting for signal."
-            hint2.text = "Please cover the camera with your finger."
-            startCameraProcesses()
-            bpmTimer = Timer.scheduledTimer(timeInterval: SCREEN_UPDATE_INTERVAL, target: self, selector: #selector(ViewController.updateDisplayedBPM), userInfo: nil, repeats: true)
+            start()
         }
         else {
-            heartView.removeFromSuperview()
-            displayHeart(imageName: "Heart_inactive")
-            bpmTimer.invalidate()
-            // End camera processes
-            session!.stopRunning()
-            toggleFlashlight()
-            initialize()
-            timer.invalidate()
-            button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
-            button.setTitle("START", for: UIControlState.normal)
-            hint1.text = "Ready to start."
-            hint2.text = "Please hit the START button."
-            timerText.text = "00:00:00"
-            BPMText.frame.size.width = 175
-            BPMText.text = "- - - BPM"
+            stop()
         }
     }
     
@@ -216,8 +232,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         if self.camCovered {
             hint1.text = "Signal detected!"
             hint2.text = "Please do not remove your finger from the camera."
-            let aSelector : Selector = #selector(ViewController.updateTime)
-            timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: aSelector, userInfo: nil, repeats: true)
+//            timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateTime), userInfo: nil, repeats: true)
             startTime = NSDate.timeIntervalSinceReferenceDate
         }
         else {
@@ -310,13 +325,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         //Find the difference between current time and start time.
         var elapsedTime: TimeInterval = currentTime - startTime
         //Calculate the minutes in elapsed time.
-        let minutes = UInt8(elapsedTime / 60.0)
+        let minutes = Int(elapsedTime / 60.0)
         elapsedTime -= (TimeInterval(minutes) * 60)
         //Calculate the seconds in elapsed time.
-        let seconds = UInt8(elapsedTime)
+        let seconds = Int(elapsedTime)
         elapsedTime -= TimeInterval(seconds)
         //Find out the fraction of milliseconds to be displayed.
-        let fraction = UInt8(elapsedTime * 100)
+        let fraction = Int(elapsedTime * 100)
         //Add the leading zero for minutes, seconds and millseconds and store them as string constants
         let strMinutes = String(format: "%02d", minutes)
         let strSeconds = String(format: "%02d", seconds)
@@ -350,7 +365,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     if vit[i-1][state2] == nil {
                         vit[i-1][state2] = 0.0
                     }
-//                    print("vit[i-1][state2]! * trans[state2][state1]:", vit[i-1][state2]! * trans[state2][state1])
                     let transProb = vit[i-1][state2]! * trans[state2][state1]
                     if transProb > transMax{
                         transMax = transProb
@@ -434,10 +448,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         
                         // Check if the standard deviation of bpm measurements is low
                         // if so, stop and ask the user if they want to import to HealthKit
-                        
-                        let standardDeviation = self.calculateStandardDeviationOfRecords(records: tempRecords)
-                        if standardDeviation < 10 && HKHealthStore.isHealthDataAvailable() { // change to standard deviation condition later
-                            session!.stopRunning()
+                        let standardDeviation = self.calculateStandardDeviationOfIntArray(array: tempRecords)
+                        if standardDeviation < 10 && HKHealthStore.isHealthDataAvailable() {
+                            self.stop() // change to STOP and RESET UI method
                             self.showHeartRateMeasuredDialog(UIButton())
                         }
                     } else{
@@ -458,35 +471,36 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
     }
     
-    func calculateStandardDeviationOfRecords(records: [Int]) -> Double {
-        // Calculate standard deviation of measurements
+    func calculateStandardDeviationOfIntArray(array: [Int]) -> Double {
+        // Calculate standard deviation of values in array
         var meanOfAllCurrentMeasurements = 0
-        for i in 0..<records.count {
-            meanOfAllCurrentMeasurements += records[i]
+        for i in 0..<array.count {
+            meanOfAllCurrentMeasurements += array[i]
         }
-        meanOfAllCurrentMeasurements = meanOfAllCurrentMeasurements/records.count
+        meanOfAllCurrentMeasurements = meanOfAllCurrentMeasurements/array.count
         var standardDeviation : Double = 0
-        for i in 0..<records.count {
-            let squaredDiff = (Double(records[i]-meanOfAllCurrentMeasurements))*(Double(records[i]-meanOfAllCurrentMeasurements))
+        for i in 0..<array.count {
+            let squaredDiff = (Double(array[i]-meanOfAllCurrentMeasurements))*(Double(array[i]-meanOfAllCurrentMeasurements))
             standardDeviation += squaredDiff
         }
-        standardDeviation = sqrt(standardDeviation/Double(records.count))
+        standardDeviation = sqrt(standardDeviation/Double(array.count))
         
         return standardDeviation
     }
     
     @IBAction func showHeartRateMeasuredDialog(_ sender: UIButton) {
-        
-        // create the alert
-        let alert = UIAlertController(title: "Heart Rate Measured", message: "Your heart rate is" + String(self.currentBPM), preferredStyle: UIAlertControllerStyle.alert)
-        
-        // add an action (button)
-        alert.addAction(UIAlertAction(title: "Save", style: UIAlertActionStyle.default, handler: {action in self.saveHeartData(bpm: self.currentBPM)}))
-        
-        alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.cancel, handler: nil))
-
-        // show the alert
-        self.present(alert, animated: true, completion: nil)
+        DispatchQueue.main.async {
+            // create the alert
+            let alert = UIAlertController(title: "Your heart rate is " + String(self.currentBPM) + " BPM", message: "Save to Apple Health?", preferredStyle: UIAlertControllerStyle.alert)
+            
+            // add an action (button)
+            alert.addAction(UIAlertAction(title: "Save", style: UIAlertActionStyle.default, handler: {action in self.saveHeartData(bpm: self.currentBPM)}))
+            
+            alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.cancel, handler: nil))
+            
+            // show the alert
+            self.present(alert, animated: true, completion: nil)
+        }
     }
     
     func saveHeartData(bpm : Int) {
