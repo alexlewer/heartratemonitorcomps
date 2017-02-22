@@ -24,9 +24,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var timer = Timer()
     
     func pulse() {
-        print("PULSE!")
         DispatchQueue.main.async {
-            print("PULSE INSIDE ASYNC!")
             self.heartView.alpha = 0.5
             self.heartView.fadeIn()
         }
@@ -67,8 +65,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var tempObservation : [Int] = [Int]()
     var tempObsTime : [Double] = [Double]()
     var previousMeasuredBPM : Int = 0
-
     
+    
+    var certaintyPercentage : Double = 0 // 1.0 - (the coefficient of variation for our results)
+
     var currentBPM : Int = 0 // Master variable dictating what will be displayed
     var bpmTimer : Timer = Timer() // Controls when to update BPM displayed on screen
     var pulseTimer : Timer = Timer() // Controls visual pulsing of heart UI element
@@ -91,6 +91,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     @IBOutlet var hint2: UILabel!
     @IBOutlet var heartView: UIImageView!
     @IBOutlet var BPMText: UILabel!
+    @IBOutlet var certaintyText: UILabel!
     
     @IBAction func goInfo(_ sender: Any) {
         if button.currentTitle == "STOP" {
@@ -106,6 +107,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 self.BPMText.text = String(self.currentBPM) + " BPM"
                 if self.currentBPM > 100 {
                     self.BPMText.frame.size.width = 190
+                    self.certaintyText.text = "Certainty: " + String(format: "%.0f", self.certaintyPercentage * 100) + "%"
                     self.heartView.removeFromSuperview()
                     self.displayHeart(imageName: "Heart_normal")
                     if self.pulseTimer.timeInterval != 0.5 {
@@ -115,6 +117,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 }
                 else {
                     self.BPMText.frame.size.width = 160
+                    self.certaintyText.text = "Certainty: " + String(format: "%.0f", self.certaintyPercentage * 100) + "%"
                     self.heartView.removeFromSuperview()
                     self.displayHeart(imageName: "Heart_normal")
                     if self.pulseTimer.timeInterval != 1.0 {
@@ -161,6 +164,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         previousMeasuredBPM = 0
         startTime = NSDate.timeIntervalSinceReferenceDate
         timer = Timer()
+        certaintyPercentage = 0.0
     }
 
     
@@ -200,6 +204,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             self.timerText.text = "00:00:00"
             self.BPMText.frame.size.width = 175
             self.BPMText.text = "- - - BPM"
+            self.certaintyText.text = "Certainty: 0%"
         }
     }
     
@@ -466,10 +471,16 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         
                         // Check if the standard deviation of bpm measurements is low
                         // if so, stop and ask the user if they want to import to HealthKit
-                        let standardDeviation = self.calculateStandardDeviationOfIntArray(array: tempRecords)
+                        let meanAndStandardDeviation = self.calculateMeanAndStandardDeviationOfIntArray(array: tempRecords)
+                        let mean = meanAndStandardDeviation.0
+                        let standardDeviation = meanAndStandardDeviation.1
                         if standardDeviation < 10 && HKHealthStore.isHealthDataAvailable() {
                             self.stop() // change to STOP and RESET UI method
                             self.showHeartRateMeasuredDialog(UIButton())
+                        } else {
+                            self.certaintyPercentage = 1.0 - (standardDeviation / mean)
+                            print("STANDARD DEVIATION:", standardDeviation)
+                            print("CERTAINTY PERCENTAGE:", self.certaintyPercentage)
                         }
                     } else{
                         if ((30<=validBPM)&&(validBPM<=300)){
@@ -489,21 +500,21 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
     }
     
-    func calculateStandardDeviationOfIntArray(array: [Int]) -> Double {
+    func calculateMeanAndStandardDeviationOfIntArray(array: [Int]) -> (Double, Double) {
         // Calculate standard deviation of values in array
-        var meanOfAllCurrentMeasurements = 0
+        var meanOfAllCurrentMeasurements = 0.0
         for i in 0..<array.count {
-            meanOfAllCurrentMeasurements += array[i]
+            meanOfAllCurrentMeasurements += Double(array[i])
         }
-        meanOfAllCurrentMeasurements = meanOfAllCurrentMeasurements/array.count
+        meanOfAllCurrentMeasurements = meanOfAllCurrentMeasurements/Double(array.count)
         var standardDeviation : Double = 0
         for i in 0..<array.count {
-            let squaredDiff = (Double(array[i]-meanOfAllCurrentMeasurements))*(Double(array[i]-meanOfAllCurrentMeasurements))
+            let squaredDiff = (Double(Double(array[i])-meanOfAllCurrentMeasurements))*(Double(Double(array[i])-meanOfAllCurrentMeasurements))
             standardDeviation += squaredDiff
         }
         standardDeviation = sqrt(standardDeviation/Double(array.count))
         
-        return standardDeviation
+        return (meanOfAllCurrentMeasurements, standardDeviation)
     }
     
     @IBAction func showHeartRateMeasuredDialog(_ sender: UIButton) {
