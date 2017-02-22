@@ -24,7 +24,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var timer = Timer()
     
     func pulse() {
+        print("PULSE!")
         DispatchQueue.main.async {
+            print("PULSE INSIDE ASYNC!")
             self.heartView.alpha = 0.5
             self.heartView.fadeIn()
         }
@@ -91,28 +93,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         timer = Timer()
     }
     
-    // Stops/resets all UI elements and reinitializes variables
-    func stop() {
-        bpmTimer.invalidate()
-        // End camera processes
-        toggleFlashlight()
-        session!.stopRunning()
-        timer.invalidate()
-        pulseTimer.invalidate()
-        
-        // Asynchronously update UI to initial state
-        DispatchQueue.main.async {
-            self.displayHeart(imageName: "Heart_inactive")
-            self.heartView.removeFromSuperview()
-            self.button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
-            self.button.setTitle("START", for: UIControlState.normal)
-            self.hint1.text = "Ready to start."
-            self.hint2.text = "Please hit the START button."
-            self.timerText.text = "00:00:00"
-            self.BPMText.frame.size.width = 175
-            self.BPMText.text = "- - - BPM"
-        }
-    }
     
     func displayHeart(imageName: String) {
         heartView = UIImageView(frame: CGRect(x: 0, y: 0, width: 170, height: 170))
@@ -146,32 +126,63 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     self.BPMText.frame.size.width = 190
                     self.heartView.removeFromSuperview()
                     self.displayHeart(imageName: "Heart_normal")
-                    self.pulseTimer.invalidate()
-                    self.pulseTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
+                    if self.pulseTimer.timeInterval != 0.5 {
+                        self.pulseTimer.invalidate()
+                        self.pulseTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
+                    }
                 }
                 else {
                     self.BPMText.frame.size.width = 160
                     self.heartView.removeFromSuperview()
                     self.displayHeart(imageName: "Heart_normal")
-                    self.pulseTimer.invalidate()
-                    self.pulseTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
+                    if self.pulseTimer.timeInterval != 1.0 {
+                        self.pulseTimer.invalidate()
+                        self.pulseTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
+                    }
                 }
             }
         }
     }
     
+    // Starts process of initializing state
     func start() {
         initialize()
-        heartView.image = UIImage(named: "Heart_normal")
-        heartView.alpha = 0.25
-        heartView.fadeIn()
-        button.setBackgroundImage(UIImage(named: "Button_stop"), for: UIControlState.normal)
-        button.setTitle("STOP", for: UIControlState.normal)
-        hint1.text = "Waiting for signal."
-        hint2.text = "Please cover the camera with your finger."
+        DispatchQueue.main.async {
+//            self.heartView.image = UIImage(named: "Heart_normal")
+            self.displayHeart(imageName: "Heart_normal")
+            self.heartView.alpha = 0.25
+            self.heartView.fadeIn()
+            self.button.setBackgroundImage(UIImage(named: "Button_stop"), for: UIControlState.normal)
+            self.button.setTitle("STOP", for: UIControlState.normal)
+            self.hint1.text = "Waiting for signal."
+            self.hint2.text = "Please cover the camera with your finger."
+        }
         startCameraProcesses()
         bpmTimer = Timer.scheduledTimer(timeInterval: SCREEN_UPDATE_INTERVAL, target: self, selector: #selector(ViewController.updateDisplayedBPM), userInfo: nil, repeats: true)
         timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateTime), userInfo: nil, repeats: true)
+    }
+    
+    // Stops/resets all UI elements and reinitializes variables
+    func stop() {
+        bpmTimer.invalidate()
+        // End camera processes
+        toggleFlashlight()
+        session!.stopRunning()
+        timer.invalidate()
+        pulseTimer.invalidate()
+        
+        // Asynchronously update UI to initial state
+        DispatchQueue.main.async {
+            self.displayHeart(imageName: "Heart_inactive")
+//            self.heartView.removeFromSuperview()
+            self.button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
+            self.button.setTitle("START", for: UIControlState.normal)
+            self.hint1.text = "Ready to start."
+            self.hint2.text = "Please hit the START button."
+            self.timerText.text = "00:00:00"
+            self.BPMText.frame.size.width = 175
+            self.BPMText.text = "- - - BPM"
+        }
     }
     
     @IBAction func startStopButton(_ sender: AnyObject) {
