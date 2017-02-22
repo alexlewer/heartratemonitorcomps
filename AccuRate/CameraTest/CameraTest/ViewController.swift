@@ -146,12 +146,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     self.BPMText.frame.size.width = 190
                     self.heartView.removeFromSuperview()
                     self.displayHeart(imageName: "Heart_normal")
+                    self.pulseTimer.invalidate()
                     self.pulseTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
                 }
                 else {
                     self.BPMText.frame.size.width = 160
                     self.heartView.removeFromSuperview()
                     self.displayHeart(imageName: "Heart_normal")
+                    self.pulseTimer.invalidate()
                     self.pulseTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
                 }
             }
@@ -509,21 +511,24 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     func saveHeartData(bpm : Int) {
         let healthKitTypes: Set = [HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!]
         let healthStore = HKHealthStore()
-        healthStore.requestAuthorization(toShare: healthKitTypes, read: nil) { (success, error) -> Void in }
-        
-        // 1. Create a heart rate BPM Sample
-        let heartRateType = HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!
-        let heartRateQuantity = HKQuantity(unit: HKUnit(from: "count/min"),
-                                           doubleValue: Double(bpm))
-        let heartSample = HKQuantitySample(type: heartRateType,
-                                           quantity: heartRateQuantity, start: NSDate() as Date, end: NSDate() as Date)
-        
-        // 2. Save the sample in the store
-        healthStore.save(heartSample, withCompletion: { (success, error) -> Void in
-            if let error = error {
-                print("Error saving heart sample: \(error.localizedDescription)")
+        //
+        healthStore.requestAuthorization(toShare: healthKitTypes, read: nil) { (success, error) -> Void in
+            if success {
+                // 1. Create a heart rate BPM Sample
+                let heartRateType = HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!
+                let heartRateQuantity = HKQuantity(unit: HKUnit(from: "count/min"),
+                                                   doubleValue: Double(bpm))
+                let heartSample = HKQuantitySample(type: heartRateType,
+                                                   quantity: heartRateQuantity, start: NSDate() as Date, end: NSDate() as Date)
+                
+                // 2. Save the sample in the store
+                healthStore.save(heartSample, withCompletion: { (success, error) -> Void in
+                    if let error = error {
+                        print("Error saving heart sample: \(error.localizedDescription)")
+                    }
+                })
             }
-        })
+        }
     }
 
     
