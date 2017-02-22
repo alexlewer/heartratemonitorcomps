@@ -73,28 +73,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var bpmTimer : Timer = Timer() // Controls when to update BPM displayed on screen
     var pulseTimer : Timer = Timer() // Controls visual pulsing of heart UI element
     
-    
-    // Initalizes state that must be reset when "STOP" is pressed or the app is loaded/navigated to.
-    func initialize() {
-        stateQueue = YChannelStateQueue()
-        brightnessDerivatives = [Int]()
-        derivativeTimes = [Double]()
-        bpmRecords = [0,0,0,0,0,0]
-        HRCount = 0
-        isFirstHR = true
-        previousBPM = 0
-        camCoverStartTime = 0.0
-        nextPeakIndex = 0
-        tempObservation = []
-        tempObsTime = []
-        currentBPM = 0
-        previousMeasuredBPM = 0
-        startTime = NSDate.timeIntervalSinceReferenceDate
-        timer = Timer()
-    }
-    
-    
     func displayHeart(imageName: String) {
+        if self.heartView != nil {
+            self.heartView.removeFromSuperview()
+        }
         heartView = UIImageView(frame: CGRect(x: 0, y: 0, width: 170, height: 170))
         self.view.addSubview(heartView)
         heartView.translatesAutoresizingMaskIntoConstraints = false
@@ -112,8 +94,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     @IBAction func goInfo(_ sender: Any) {
         if button.currentTitle == "STOP" {
-            session!.stopRunning()
             toggleFlashlight()
+            stop()
         }
     }
     
@@ -144,11 +126,48 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
     }
     
+    // Updates display based on whether or not finger coverage is detected
+    func updateDisplayFingerCoverage() {
+        if self.camCovered {
+            hint1.text = "Signal detected!"
+            hint2.text = "Please do not remove your finger from the camera."
+        }
+        else {
+            heartView.removeFromSuperview()
+            displayHeart(imageName: "Heart_normal")
+            hint1.text = "Waiting for signal."
+            hint2.text = "Please cover the camera with your finger."
+            timerText.text = "00:00:00"
+            BPMText.frame.size.width = 175
+            BPMText.text = "- - - BPM"
+        }
+    }
+
+    
+    // Initalizes state that must be reset when "START" is pressed or the app is loaded/navigated to.
+    func initialize() {
+        stateQueue = YChannelStateQueue()
+        brightnessDerivatives = [Int]()
+        derivativeTimes = [Double]()
+        bpmRecords = [0,0,0,0,0,0]
+        HRCount = 0
+        isFirstHR = true
+        previousBPM = 0
+        camCoverStartTime = 0.0
+        nextPeakIndex = 0
+        tempObservation = []
+        tempObsTime = []
+        currentBPM = 0
+        previousMeasuredBPM = 0
+        startTime = NSDate.timeIntervalSinceReferenceDate
+        timer = Timer()
+    }
+
+    
     // Starts process of initializing state
     func start() {
         initialize()
         DispatchQueue.main.async {
-//            self.heartView.image = UIImage(named: "Heart_normal")
             self.displayHeart(imageName: "Heart_normal")
             self.heartView.alpha = 0.25
             self.heartView.fadeIn()
@@ -174,7 +193,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         // Asynchronously update UI to initial state
         DispatchQueue.main.async {
             self.displayHeart(imageName: "Heart_inactive")
-//            self.heartView.removeFromSuperview()
             self.button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
             self.button.setTitle("START", for: UIControlState.normal)
             self.hint1.text = "Ready to start."
@@ -241,22 +259,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
     }
     
-    func updateDisplay() {
-        if self.camCovered {
-            hint1.text = "Signal detected!"
-            hint2.text = "Please do not remove your finger from the camera."
-        }
-        else {
-            heartView.removeFromSuperview()
-            displayHeart(imageName: "Heart_normal")
-            hint1.text = "Waiting for signal."
-            hint2.text = "Please cover the camera with your finger."
-            timerText.text = "00:00:00"
-            BPMText.frame.size.width = 175
-            BPMText.text = "- - - BPM"
-        }
-    }
-    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -319,12 +321,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     self.lapsing = true;
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
                         if !self.camCovered && self.button.currentTitle == "STOP" {
-                            self.updateDisplay()
+                            self.updateDisplayFingerCoverage()
                         }
                         self.lapsing = false;
                     })
                 } else if !self.lapsing && self.button.currentTitle == "STOP" {
-                    self.updateDisplay()
+                    self.updateDisplayFingerCoverage()
                 }
             }
         }
