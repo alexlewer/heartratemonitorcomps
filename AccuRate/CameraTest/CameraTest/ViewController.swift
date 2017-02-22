@@ -87,7 +87,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         tempObsTime = []
         currentBPM = 0
         previousMeasuredBPM = 0
-        startTime = TimeInterval()
+        startTime = NSDate.timeIntervalSinceReferenceDate
         timer = Timer()
     }
     
@@ -232,8 +232,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         if self.camCovered {
             hint1.text = "Signal detected!"
             hint2.text = "Please do not remove your finger from the camera."
-//            timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateTime), userInfo: nil, repeats: true)
-            startTime = NSDate.timeIntervalSinceReferenceDate
         }
         else {
             heartView.removeFromSuperview()
@@ -321,23 +319,28 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     }
     
     func updateTime() {
-        let currentTime = NSDate.timeIntervalSinceReferenceDate
-        //Find the difference between current time and start time.
-        var elapsedTime: TimeInterval = currentTime - startTime
-        //Calculate the minutes in elapsed time.
-        let minutes = Int(elapsedTime / 60.0)
-        elapsedTime -= (TimeInterval(minutes) * 60)
-        //Calculate the seconds in elapsed time.
-        let seconds = Int(elapsedTime)
-        elapsedTime -= TimeInterval(seconds)
-        //Find out the fraction of milliseconds to be displayed.
-        let fraction = Int(elapsedTime * 100)
-        //Add the leading zero for minutes, seconds and millseconds and store them as string constants
-        let strMinutes = String(format: "%02d", minutes)
-        let strSeconds = String(format: "%02d", seconds)
-        let strFraction = String(format: "%02d", fraction)
-        //Concatenate minuets, seconds and milliseconds as assign it to the UILabel
-        timerText.text = "\(strMinutes):\(strSeconds):\(strFraction)"
+        DispatchQueue.main.async {
+            let currentTime = NSDate.timeIntervalSinceReferenceDate
+            //Find the difference between current time and start time.
+            var elapsedTime: TimeInterval = currentTime - self.startTime
+            if elapsedTime > 8000000 { // To fix underflow error that causes wonky display in line above
+                elapsedTime = 0
+            }
+            //Calculate the minutes in elapsed time.
+            let minutes = UInt32(elapsedTime / 60.0)
+            elapsedTime -= (TimeInterval(minutes) * 60)
+            //Calculate the seconds in elapsed time.
+            let seconds = UInt32(elapsedTime)
+            elapsedTime -= TimeInterval(seconds)
+            //Find out the fraction of milliseconds to be displayed.
+            let fraction = UInt32(elapsedTime * 100)
+            //Add the leading zero for minutes, seconds and millseconds and store them as string constants
+            let strMinutes = String(format: "%02d", minutes)
+            let strSeconds = String(format: "%02d", seconds)
+            let strFraction = String(format: "%02d", fraction)
+            //Concatenate minuets, seconds and milliseconds as assign it to the UILabel
+            self.timerText.text = "\(strMinutes):\(strSeconds):\(strFraction)"
+        }
     }
     
     
