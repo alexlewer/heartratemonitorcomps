@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 import matplotlib.pyplot as plt
+import re
 
 ## Just some simple analytics to run on data. Helps to see if matrices from Baum-Welch support elements of our data
 ## These analytics are my no means comprehensive and are open for addition and modification
@@ -53,41 +54,32 @@ def check_raw_waveform(filepath):
 	plt.axis([0, x[-1], 0, 100])
 	plt.show()
 
-def check_raw_waveform(filepath, filepath2):
-	x, y = [], []
-	curx = 0
-	cury = 0
-	x2, y2 = [], []
-	curx2 = 0
-	cury2 = 0
+def compare_waveform(filepath):
+	pattern = re.compile("^[a-z,_,.]*on[a-z,_,.,0-9]*$")
+
 	with open("data/" + filepath, 'r') as file:
-		reader = csv.reader(file)
-		for row in reader:
-			try:
-				cury = float(row[1])
-				curx += 1
+		obs_files = file.readlines()
+		for obs_filepath in obs_files:
+			with open("data/" + obs_filepath.rstrip(), 'r') as obs_file:
+				x, y = [], []
+				curx = 0
+				cury = 0
 
-				x.append(curx)
-				y.append(cury)
+				reader = csv.reader(obs_file)
+				for row in reader:
+					try:
+						y.append(float(row[1]))
+						x.append(curx)
+						curx += 1
+					except ValueError:
+						pass
 
-			except ValueError:
-				pass
+				if pattern.match(obs_filepath.rstrip()):
+					plt.plot(x, y, 'b')
+				else:
+					plt.plot(x, y, 'r')
 
-	with open("data/" + filepath2, 'r') as file:
-		reader = csv.reader(file)
-		for row in reader:
-			try:
-				cury2 = float(row[1])
-				curx2 += 1
-
-				x2.append(curx2)
-				y2.append(cury2)
-
-			except ValueError:
-				pass
-
-	plt.plot(x, y)
-	plt.plot(x2, y2)
+	plt.axis([0, 350, 0, 100])
 	plt.show()
 
 def start_obs(filepath):
