@@ -65,6 +65,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var tempObservation : [Int] = [Int]()
     var tempObsTime : [Double] = [Double]()
     var previousMeasuredBPM : Int = 0
+    var currentStandardDeviation : Double = -1.0
+    var previousStandardDeviation : Double = -1.0
     
     
     var certaintyPercentage : Double = 0 // 1.0 - (the coefficient of variation for our results)
@@ -104,25 +106,29 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     func updateDisplayedBPM() {
         if self.currentBPM != 0 {
             DispatchQueue.main.async {
-                self.BPMText.text = String(self.currentBPM) + " BPM"
-                if self.currentBPM > 100 {
-                    self.BPMText.frame.size.width = 190
-                    self.certaintyText.text = "Certainty: " + String(format: "%.0f", self.certaintyPercentage * 100) + "%"
-                    self.heartView.removeFromSuperview()
-                    self.displayHeart(imageName: "Heart_normal")
-                    if self.pulseTimer.timeInterval != 0.5 {
-                        self.pulseTimer.invalidate()
-                        self.pulseTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
+                if self.previousStandardDeviation == -1.0 || self.currentStandardDeviation < self.previousStandardDeviation {
+                    print("standard deviation was", self.previousStandardDeviation, "now", self.currentStandardDeviation)
+                    self.previousStandardDeviation = self.currentStandardDeviation
+                    self.BPMText.text = String(self.currentBPM) + " BPM"
+                    if self.currentBPM > 100 {
+                        self.BPMText.frame.size.width = 190
+                        self.certaintyText.text = "Certainty: " + String(format: "%.0f", self.certaintyPercentage * 100) + "%"
+                        self.heartView.removeFromSuperview()
+                        self.displayHeart(imageName: "Heart_normal")
+                        if self.pulseTimer.timeInterval != 0.5 {
+                            self.pulseTimer.invalidate()
+                            self.pulseTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
+                        }
                     }
-                }
-                else {
-                    self.BPMText.frame.size.width = 160
-                    self.certaintyText.text = "Certainty: " + String(format: "%.0f", self.certaintyPercentage * 100) + "%"
-                    self.heartView.removeFromSuperview()
-                    self.displayHeart(imageName: "Heart_normal")
-                    if self.pulseTimer.timeInterval != 1.0 {
-                        self.pulseTimer.invalidate()
-                        self.pulseTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
+                    else {
+                        self.BPMText.frame.size.width = 160
+                        self.certaintyText.text = "Certainty: " + String(format: "%.0f", self.certaintyPercentage * 100) + "%"
+                        self.heartView.removeFromSuperview()
+                        self.displayHeart(imageName: "Heart_normal")
+                        if self.pulseTimer.timeInterval != 1.0 {
+                            self.pulseTimer.invalidate()
+                            self.pulseTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
+                        }
                     }
                 }
             }
@@ -165,6 +171,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         startTime = NSDate.timeIntervalSinceReferenceDate
         timer = Timer()
         certaintyPercentage = 0.0
+        previousStandardDeviation = -1.0
     }
 
     
@@ -481,8 +488,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         let meanAndStandardDeviation = self.calculateMeanAndStandardDeviationOfIntArray(array: tempRecords)
                         let mean = meanAndStandardDeviation.0
                         let standardDeviation = meanAndStandardDeviation.1
+                        self.currentStandardDeviation = standardDeviation
                         if standardDeviation < 10 && HKHealthStore.isHealthDataAvailable() {
-                            self.stop() // change to STOP and RESET UI method
+                            self.stop()
                             self.showHeartRateMeasuredDialog(UIButton())
                         } else {
                             self.certaintyPercentage = 1.0 - (standardDeviation / mean)
@@ -570,29 +578,29 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
 
         
         // BayesHeart Matrices
-//        let trans = [[0.6794, 0.3206, 0.0, 0.0],
-//                     [0.0, 0.5366, 0.4634, 0.0],
-//                     [0.0, 0.0, 0.3485, 0.6516],
-//                     [0.1508, 0.0, 0.0, 0.8492]]
-//        
-//        let emit = [[0.6884, 0.0015, 0.3002, 0.0099],
-//                    [0.0, 0.7205, 0.0102, 0.2694],
-//                    [0.2894, 0.3731, 0.3362, 0.0023],
-//                    [0.0005, 0.8440, 0.0021, 0.1534]]
-//        let p = [0.25, 0.20, 0.10, 0.45]
+        let trans = [[0.6794, 0.3206, 0.0, 0.0],
+                     [0.0, 0.5366, 0.4634, 0.0],
+                     [0.0, 0.0, 0.3485, 0.6516],
+                     [0.1508, 0.0, 0.0, 0.8492]]
+        
+        let emit = [[0.6884, 0.0015, 0.3002, 0.0099],
+                    [0.0, 0.7205, 0.0102, 0.2694],
+                    [0.2894, 0.3731, 0.3362, 0.0023],
+                    [0.0005, 0.8440, 0.0021, 0.1534]]
+        let p = [0.25, 0.20, 0.10, 0.45]
         
         // our matrices (with BayesHeart as initial)
-        let trans = [[0.81196025,  0.18803975,  0.0,  0.0],
-            [ 0.0,  0.0,  1.0,  0.0],
-            [ 0.0,  0.0,  0.38188347,  0.61811653],
-            [ 1.0,  0.0,  0.0,  0.0]]
-        
-        let emit = [[ 0.86449806,  0.0023080861,  0.066598702,  0.066595155],
-            [ 0.0,  0.016592151,  0.98340785,  0.0],
-            [ 0.0,  1.0,  0.0,  0.0],
-            [ 0.0,  0.016573281,  0.0,  0.98342672]]
-        
-        let p = [1.0, 0.0, 0.0, 0.0]
+//        let trans = [[0.81196025,  0.18803975,  0.0,  0.0],
+//            [ 0.0,  0.0,  1.0,  0.0],
+//            [ 0.0,  0.0,  0.38188347,  0.61811653],
+//            [ 1.0,  0.0,  0.0,  0.0]]
+//        
+//        let emit = [[ 0.86449806,  0.0023080861,  0.066598702,  0.066595155],
+//            [ 0.0,  0.016592151,  0.98340785,  0.0],
+//            [ 0.0,  1.0,  0.0,  0.0],
+//            [ 0.0,  0.016573281,  0.0,  0.98342672]]
+//        
+//        let p = [1.0, 0.0, 0.0, 0.0]
         
         // Trained from vanilla
 //        let trans = [[ 0.73051926,  0.26948074,  0.0,  0.0],
