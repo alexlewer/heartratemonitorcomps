@@ -133,13 +133,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     func updateDisplayFingerCoverage() {
         if self.camCovered {
             hint1.text = "Signal detected!"
-            hint2.text = "Please do not remove your finger from the camera."
+            hint2.text = "Please do not move your finger."
         }
         else {
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_normal")
             hint1.text = "Waiting for signal."
-            hint2.text = "Please cover the camera with your finger."
+            hint2.text = "Please cover both camera and flashlight."
             timerText.text = "00:00:00"
             BPMText.frame.size.width = 175
             BPMText.text = "- - - BPM"
@@ -178,7 +178,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             self.button.setBackgroundImage(UIImage(named: "Button_stop"), for: UIControlState.normal)
             self.button.setTitle("STOP", for: UIControlState.normal)
             self.hint1.text = "Waiting for signal."
-            self.hint2.text = "Please cover the camera with your finger."
+            self.hint2.text = "Please cover both camera and flashlight."
         }
         startCameraProcesses()
         bpmTimer = Timer.scheduledTimer(timeInterval: SCREEN_UPDATE_INTERVAL, target: self, selector: #selector(ViewController.updateDisplayedBPM), userInfo: nil, repeats: true)
