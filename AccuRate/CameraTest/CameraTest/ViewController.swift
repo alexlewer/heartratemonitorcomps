@@ -432,7 +432,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         for i in 0..<states.count{
             if (states[i]==0 && previous == 3) {
-                if beginningTime != 0 {
+                if (beginningTime != 0 && derivativeTimes[i] != beginningTime) {
                     interval = (derivativeTimes[i]) - beginningTime
                     validBPM = Int(60 / interval)
                     if ((validBPM > 30) && (validBPM < 300)) || HRCount == 0{
@@ -451,7 +451,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         for k in 1..<5{
                             sum = sum + Double((tempRecords[k]))
                         }
-                        avg = sum/3
+                        avg = sum / 4
                         var usefulEnds:Int = 0
                         if abs(Double((tempRecords[0])) - avg)<=10{
                             sum = sum + Double((tempRecords[0]))
@@ -612,6 +612,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             let pixels = 1080 * bytesPerRow
             let value = mean/Double(pixels)
             stateQueue.addValue(value: value)
+            
+            // If temp arrays are full enough, copy them to self.brightnessDerivatives and self.derivativeTimes
+            // Then clear temp arrays
             if (self.tempObservation.count != 0){
                 if (((tempObsTime.last!) - (tempObsTime.first!)) >= 2.0) {
                     for i in 0..<self.tempObservation.count {
@@ -631,6 +634,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             self.needToFindNextPeak = true
             if (self.brightnessDerivatives.count != 0){
                 if (((self.derivativeTimes.last)! - (self.derivativeTimes.first)!) >= 3.0){
+                    // Only keep latest 200 observations and times
                     if (((self.derivativeTimes.last)! - (self.derivativeTimes.first)!) >= 20 && self.brightnessDerivatives.count > 200 && self.derivativeTimes.count > 200){
                         let temp1 = self.brightnessDerivatives[200..<self.brightnessDerivatives.count]
                         self.brightnessDerivatives = Array(temp1)
@@ -642,6 +646,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                 }
             }
             
+            // Start repopulating temp arrays
             self.tempObservation.append((stateQueue.getState()))
             self.tempObsTime.append(currentTime)
             if (needToFindNextPeak) {
