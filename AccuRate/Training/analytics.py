@@ -53,6 +53,43 @@ def check_raw_waveform(filepath):
 	plt.axis([0, x[-1], 0, 100])
 	plt.show()
 
+def check_raw_waveform(filepath, filepath2):
+	x, y = [], []
+	curx = 0
+	cury = 0
+	x2, y2 = [], []
+	curx2 = 0
+	cury2 = 0
+	with open("data/" + filepath, 'r') as file:
+		reader = csv.reader(file)
+		for row in reader:
+			try:
+				cury = float(row[1])
+				curx += 1
+
+				x.append(curx)
+				y.append(cury)
+
+			except ValueError:
+				pass
+
+	with open("data/" + filepath2, 'r') as file:
+		reader = csv.reader(file)
+		for row in reader:
+			try:
+				cury2 = float(row[1])
+				curx2 += 1
+
+				x2.append(curx2)
+				y2.append(cury2)
+
+			except ValueError:
+				pass
+
+	plt.plot(x, y)
+	plt.plot(x2, y2)
+	plt.show()
+
 def start_obs(filepath):
 	num0, num1, num2, num3 = 0, 0, 0, 0
 
