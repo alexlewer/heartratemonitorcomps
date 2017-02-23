@@ -1,6 +1,9 @@
 
 !*.xcodeproj/xcshareddata
 *xcuserdata
+*xcuserstate
+*xcworkspace
+*pbxproj
 
 build
 .DS_Store
