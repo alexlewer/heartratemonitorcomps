@@ -310,8 +310,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         return (mean, stdDev);
     }
     
+    // Update camCovered to let app know if user's finger is covering camera.
+    // @return mean brightness value for passed pixels
     func detectFingerCoverage(bytesPerRow: Int, byteBuffer: UnsafeMutablePointer<UInt8>) -> Double {
         
+        // Get mean pixel brightness and standard deviation from that value
         let meanAndStdDev = getMeanAndStdDev(bytesPerRow: bytesPerRow, byteBuffer: byteBuffer)
         
         let mean = meanAndStdDev.0
@@ -319,9 +322,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         let covered = getCoverageFromBrightness(lumaMean: mean, lumaStdDev: stdDev)
         
+        // Update camCovered asynchronously
         DispatchQueue.main.async {
             if covered != self.camCovered {
                 self.camCovered = covered
+                
+                // If camera becomes uncovered, wait for 1 second while keeping timer running, then if camera
+                // is still uncovered, reset display.
                 if !self.camCovered && !self.lapsing {
                     self.lapsing = true;
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
