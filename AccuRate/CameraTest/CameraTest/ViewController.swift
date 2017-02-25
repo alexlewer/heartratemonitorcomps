@@ -175,6 +175,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             self.startResumeTimer()
             hint1.text = "Signal detected!"
             hint2.text = "Please do not move your finger."
+            heartView.removeFromSuperview()
+            displayHeart(imageName: "Heart_normal")
         }
         else {
             self.pauseTimer()
@@ -246,6 +248,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         
         // Asynchronously update UI to initial state
         DispatchQueue.main.async {
+            self.heartView.removeFromSuperview()
             self.displayHeart(imageName: "Heart_inactive")
             self.button.setBackgroundImage(UIImage(named: "Button_start"), for: UIControlState.normal)
             self.button.setTitle("START", for: UIControlState.normal)
