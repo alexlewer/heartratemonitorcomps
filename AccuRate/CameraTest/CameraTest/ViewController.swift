@@ -26,9 +26,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var timePaused : TimeInterval = 0.0
     
     func pulse() {
-        print("PULSE!")
         if self.camCovered {
-            print("PULSE!!!")
             DispatchQueue.main.async {
                 print("PULSE!!!!!")
                 self.heartView.alpha = 0.5
@@ -144,15 +142,17 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         if self.currentBPM != 0 {
             DispatchQueue.main.async {
                 if self.camCovered {
-                    print("standard deviation was", self.previousStandardDeviation, "now", self.currentStandardDeviation)
+                    // print("standard deviation was", self.previousStandardDeviation, "now", self.currentStandardDeviation)
                     self.BPMText.text = String(self.currentBPM) + " BPM"
                     if self.currentBPM > 100 {
                         self.BPMText.frame.size.width = 190
                         self.certaintyText.text = "Certainty: " + String(format: "%.0f", self.certaintyPercentage * 100) + "%"
                         self.heartView.removeFromSuperview()
                         self.displayHeart(imageName: "Heart_normal")
-                        if self.pulseTimer.timeInterval != 0.5 {
+                        if self.pulseTimer.timeInterval != 0.5 || !self.pulseTimer.isValid {
+                            print("Invalidating pulseTimer")
                             self.pulseTimer.invalidate()
+                            print("Initializing pulseTimer")
                             self.pulseTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
                         }
                     }
@@ -161,8 +161,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         self.certaintyText.text = "Certainty: " + String(format: "%.0f", self.certaintyPercentage * 100) + "%"
                         self.heartView.removeFromSuperview()
                         self.displayHeart(imageName: "Heart_normal")
-                        if self.pulseTimer.timeInterval != 1.0 {
+                        if self.pulseTimer.timeInterval != 1.0 || !self.pulseTimer.isValid {
+                            print("Invalidating pulseTimer")
                             self.pulseTimer.invalidate()
+                            print("Initializing pulseTimer")
                             self.pulseTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(ViewController.pulse), userInfo: nil, repeats: true)
                         }
                     }
@@ -243,6 +245,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     func stop() {
         bpmTimer.invalidate()
         self.stopTimer()
+        print("Invalidating pulseTimer")
         pulseTimer.invalidate()
         
         // End camera processes
@@ -514,7 +517,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         var avg:Double = 0
                         var sum:Double = 0
                         var tempRecords = bpmRecords.sorted()
-                        print("array: ", tempRecords)
+                        // print("array: ", tempRecords)
                         for k in 1..<5{
                             sum = sum + Double((tempRecords[k]))
                         }
@@ -529,7 +532,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                             usefulEnds += 1
                         }
                         avg = sum / Double(4 + usefulEnds)
-                        print("previous: ", previousBPM, " avg: ", avg)
+                        // print("previous: ", previousBPM, " avg: ", avg)
                         if (abs(tempBPM - previousBPM) <= 10)
                             && (tempBPM >= 30) && (tempBPM <= 300) {
                             validBPM = (((tempRecords[2])+(tempRecords[3])+tempBPM) / 3 + previousBPM) / 2
@@ -542,7 +545,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         
 
                         
-                        print("we choose: ", currentBPM)
+                        // print("we choose: ", currentBPM)
                         
                         // Check if the standard deviation of bpm measurements is low
                         // if so, stop and ask the user if they want to import to HealthKit
@@ -564,8 +567,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                             self.stop()
                             self.showHeartRateMeasuredDialog(UIButton())
                         } else {
-                            print("STANDARD DEVIATION:", standardDeviation)
-                            print("CERTAINTY PERCENTAGE:", self.certaintyPercentage)
+                            //print("STANDARD DEVIATION:", standardDeviation)
+                            //print("CERTAINTY PERCENTAGE:", self.certaintyPercentage)
                         }
                     } else{
                         if ((30<=validBPM)&&(validBPM<=300)){
