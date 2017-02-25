@@ -1,6 +1,6 @@
 //
-//  CameraTestUITests.swift
-//  CameraTestUITests
+//  AccuRateUITests.swift
+//  AccuRateUITests
 //
 //  Created by Grant Terrien on 9/30/16.
 //  Copyright © 2016 com.terrien. All rights reserved.
@@ -8,7 +8,7 @@
 
 import XCTest
 
-class CameraTestUITests: XCTestCase {
+class AccuRateUITests: XCTestCase {
         
     override func setUp() {
         super.setUp()

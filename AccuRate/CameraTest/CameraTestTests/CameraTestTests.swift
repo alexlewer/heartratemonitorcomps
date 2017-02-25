@@ -1,15 +1,15 @@
 //
-//  CameraTestTests.swift
-//  CameraTestTests
+//  AccuRateTests.swift
+//  AccuRateTests
 //
 //  Created by Grant Terrien on 9/30/16.
 //  Copyright © 2016 com.terrien. All rights reserved.
 //
 
 import XCTest
-@testable import CameraTest
+@testable import AccuRate
 
-class CameraTestTests: XCTestCase {
+class AccuRateTests: XCTestCase {
     
     override func setUp() {
         super.setUp()

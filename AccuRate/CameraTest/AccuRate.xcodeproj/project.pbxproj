@@ -44,16 +44,16 @@
 		BA5E27E91E5BADE000BC13B6 /* CameraTest.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CameraTest.entitlements; sourceTree = "<group>"; };
 		BA5E27EB1E5BADE000BC13B6 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		BA70EE141DCFBD38000C2930 /* YChannelStateQueue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = YChannelStateQueue.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
-		BAE8BBA01D9F234800833DF5 /* CameraTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CameraTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BAE8BBA01D9F234800833DF5 /* AccuRate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AccuRate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BAE8BBA31D9F234800833DF5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BAE8BBA51D9F234800833DF5 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = ViewController.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		BAE8BBAA1D9F234800833DF5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BAE8BBAD1D9F234800833DF5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BAE8BBAF1D9F234800833DF5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		BAE8BBB41D9F234800833DF5 /* CameraTestTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CameraTestTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BAE8BBB41D9F234800833DF5 /* AccuRateTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AccuRateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BAE8BBB81D9F234800833DF5 /* CameraTestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraTestTests.swift; sourceTree = "<group>"; };
 		BAE8BBBA1D9F234800833DF5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		BAE8BBBF1D9F234800833DF5 /* CameraTestUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CameraTestUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BAE8BBBF1D9F234800833DF5 /* AccuRateUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AccuRateUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BAE8BBC31D9F234800833DF5 /* CameraTestUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraTestUITests.swift; sourceTree = "<group>"; };
 		BAE8BBC51D9F234800833DF5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -97,7 +97,7 @@
 			isa = PBXGroup;
 			children = (
 				631B1F241DBB1A560058BDF2 /* AVFoundation.framework */,
-				BAE8BBA21D9F234800833DF5 /* CameraTest */,
+				BAE8BBA21D9F234800833DF5 /* AccuRate */,
 				BAE8BBB71D9F234800833DF5 /* CameraTestTests */,
 				BAE8BBC21D9F234800833DF5 /* CameraTestUITests */,
 				BAE8BBA11D9F234800833DF5 /* Products */,
@@ -108,14 +108,14 @@
 		BAE8BBA11D9F234800833DF5 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				BAE8BBA01D9F234800833DF5 /* CameraTest.app */,
-				BAE8BBB41D9F234800833DF5 /* CameraTestTests.xctest */,
-				BAE8BBBF1D9F234800833DF5 /* CameraTestUITests.xctest */,
+				BAE8BBA01D9F234800833DF5 /* AccuRate.app */,
+				BAE8BBB41D9F234800833DF5 /* AccuRateTests.xctest */,
+				BAE8BBBF1D9F234800833DF5 /* AccuRateUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		BAE8BBA21D9F234800833DF5 /* CameraTest */ = {
+		BAE8BBA21D9F234800833DF5 /* AccuRate */ = {
 			isa = PBXGroup;
 			children = (
 				BA5E27E91E5BADE000BC13B6 /* CameraTest.entitlements */,
@@ -128,6 +128,7 @@
 				BAE8BBAC1D9F234800833DF5 /* LaunchScreen.storyboard */,
 				BAE8BBAF1D9F234800833DF5 /* Info.plist */,
 			);
+			name = AccuRate;
 			path = CameraTest;
 			sourceTree = "<group>";
 		};
@@ -152,9 +153,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		BAE8BB9F1D9F234800833DF5 /* CameraTest */ = {
+		BAE8BB9F1D9F234800833DF5 /* AccuRate */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BAE8BBC81D9F234800833DF5 /* Build configuration list for PBXNativeTarget "CameraTest" */;
+			buildConfigurationList = BAE8BBC81D9F234800833DF5 /* Build configuration list for PBXNativeTarget "AccuRate" */;
 			buildPhases = (
 				BAE8BB9C1D9F234800833DF5 /* Sources */,
 				BAE8BB9D1D9F234800833DF5 /* Frameworks */,
@@ -164,14 +165,14 @@
 			);
 			dependencies = (
 			);
-			name = CameraTest;
+			name = AccuRate;
 			productName = CameraTest;
-			productReference = BAE8BBA01D9F234800833DF5 /* CameraTest.app */;
+			productReference = BAE8BBA01D9F234800833DF5 /* AccuRate.app */;
 			productType = "com.apple.product-type.application";
 		};
-		BAE8BBB31D9F234800833DF5 /* CameraTestTests */ = {
+		BAE8BBB31D9F234800833DF5 /* AccuRateTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BAE8BBCB1D9F234800833DF5 /* Build configuration list for PBXNativeTarget "CameraTestTests" */;
+			buildConfigurationList = BAE8BBCB1D9F234800833DF5 /* Build configuration list for PBXNativeTarget "AccuRateTests" */;
 			buildPhases = (
 				BAE8BBB01D9F234800833DF5 /* Sources */,
 				BAE8BBB11D9F234800833DF5 /* Frameworks */,
@@ -182,14 +183,14 @@
 			dependencies = (
 				BAE8BBB61D9F234800833DF5 /* PBXTargetDependency */,
 			);
-			name = CameraTestTests;
+			name = AccuRateTests;
 			productName = CameraTestTests;
-			productReference = BAE8BBB41D9F234800833DF5 /* CameraTestTests.xctest */;
+			productReference = BAE8BBB41D9F234800833DF5 /* AccuRateTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		BAE8BBBE1D9F234800833DF5 /* CameraTestUITests */ = {
+		BAE8BBBE1D9F234800833DF5 /* AccuRateUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BAE8BBCE1D9F234800833DF5 /* Build configuration list for PBXNativeTarget "CameraTestUITests" */;
+			buildConfigurationList = BAE8BBCE1D9F234800833DF5 /* Build configuration list for PBXNativeTarget "AccuRateUITests" */;
 			buildPhases = (
 				BAE8BBBB1D9F234800833DF5 /* Sources */,
 				BAE8BBBC1D9F234800833DF5 /* Frameworks */,
@@ -200,9 +201,9 @@
 			dependencies = (
 				BAE8BBC11D9F234800833DF5 /* PBXTargetDependency */,
 			);
-			name = CameraTestUITests;
+			name = AccuRateUITests;
 			productName = CameraTestUITests;
-			productReference = BAE8BBBF1D9F234800833DF5 /* CameraTestUITests.xctest */;
+			productReference = BAE8BBBF1D9F234800833DF5 /* AccuRateUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -238,7 +239,7 @@
 					};
 				};
 			};
-			buildConfigurationList = BAE8BB9B1D9F234800833DF5 /* Build configuration list for PBXProject "CameraTest" */;
+			buildConfigurationList = BAE8BB9B1D9F234800833DF5 /* Build configuration list for PBXProject "AccuRate" */;
 			compatibilityVersion = "Xcode 8.0";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -251,9 +252,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				BAE8BB9F1D9F234800833DF5 /* CameraTest */,
-				BAE8BBB31D9F234800833DF5 /* CameraTestTests */,
-				BAE8BBBE1D9F234800833DF5 /* CameraTestUITests */,
+				BAE8BB9F1D9F234800833DF5 /* AccuRate */,
+				BAE8BBB31D9F234800833DF5 /* AccuRateTests */,
+				BAE8BBBE1D9F234800833DF5 /* AccuRateUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -318,12 +319,12 @@
 /* Begin PBXTargetDependency section */
 		BAE8BBB61D9F234800833DF5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = BAE8BB9F1D9F234800833DF5 /* CameraTest */;
+			target = BAE8BB9F1D9F234800833DF5 /* AccuRate */;
 			targetProxy = BAE8BBB51D9F234800833DF5 /* PBXContainerItemProxy */;
 		};
 		BAE8BBC11D9F234800833DF5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = BAE8BB9F1D9F234800833DF5 /* CameraTest */;
+			target = BAE8BB9F1D9F234800833DF5 /* AccuRate */;
 			targetProxy = BAE8BBC01D9F234800833DF5 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -450,11 +451,11 @@
 				CODE_SIGN_ENTITLEMENTS = CameraTest/CameraTest.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = 9YV9Z8GK9A;
+				DEVELOPMENT_TEAM = RNM982WYFQ;
 				INFOPLIST_FILE = "$(SRCROOT)/CameraTest/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.renzhiwu;
+				PRODUCT_BUNDLE_IDENTIFIER = edu.gterrien;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
@@ -470,11 +471,11 @@
 				CODE_SIGN_ENTITLEMENTS = CameraTest/CameraTest.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = 9YV9Z8GK9A;
+				DEVELOPMENT_TEAM = RNM982WYFQ;
 				INFOPLIST_FILE = "$(SRCROOT)/CameraTest/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.renzhiwu;
+				PRODUCT_BUNDLE_IDENTIFIER = edu.gterrien;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
@@ -494,7 +495,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.terrien.CameraTestTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CameraTest.app/CameraTest";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AccuRate.app/AccuRate";
 			};
 			name = Debug;
 		};
@@ -509,7 +510,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.terrien.CameraTestTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CameraTest.app/CameraTest";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AccuRate.app/AccuRate";
 			};
 			name = Release;
 		};
@@ -544,7 +545,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		BAE8BB9B1D9F234800833DF5 /* Build configuration list for PBXProject "CameraTest" */ = {
+		BAE8BB9B1D9F234800833DF5 /* Build configuration list for PBXProject "AccuRate" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BAE8BBC61D9F234800833DF5 /* Debug */,
@@ -553,7 +554,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BAE8BBC81D9F234800833DF5 /* Build configuration list for PBXNativeTarget "CameraTest" */ = {
+		BAE8BBC81D9F234800833DF5 /* Build configuration list for PBXNativeTarget "AccuRate" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BAE8BBC91D9F234800833DF5 /* Debug */,
@@ -562,7 +563,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BAE8BBCB1D9F234800833DF5 /* Build configuration list for PBXNativeTarget "CameraTestTests" */ = {
+		BAE8BBCB1D9F234800833DF5 /* Build configuration list for PBXNativeTarget "AccuRateTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BAE8BBCC1D9F234800833DF5 /* Debug */,
@@ -571,7 +572,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BAE8BBCE1D9F234800833DF5 /* Build configuration list for PBXNativeTarget "CameraTestUITests" */ = {
+		BAE8BBCE1D9F234800833DF5 /* Build configuration list for PBXNativeTarget "AccuRateUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BAE8BBCF1D9F234800833DF5 /* Debug */,

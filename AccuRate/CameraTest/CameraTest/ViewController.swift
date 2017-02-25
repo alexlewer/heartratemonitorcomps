@@ -145,7 +145,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             DispatchQueue.main.async {
                 if self.camCovered {
                     print("standard deviation was", self.previousStandardDeviation, "now", self.currentStandardDeviation)
-                    self.previousStandardDeviation = self.currentStandardDeviation
                     self.BPMText.text = String(self.currentBPM) + " BPM"
                     if self.currentBPM > 100 {
                         self.BPMText.frame.size.width = 190
@@ -541,10 +540,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         }
                         previousBPM = validBPM
                         
-                        if self.previousStandardDeviation == -1.0 || self.currentStandardDeviation < self.previousStandardDeviation {
-                            self.currentBPM = validBPM
-                            self.previousStandardDeviation = self.currentStandardDeviation
-                        }
+
                         
                         print("we choose: ", currentBPM)
                         
@@ -554,16 +550,20 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         let mean = meanAndStandardDeviation.0
                         let standardDeviation = meanAndStandardDeviation.1
                         self.currentStandardDeviation = standardDeviation
-                        if standardDeviation < 10 && HKHealthStore.isHealthDataAvailable() {
-                            self.stop()
-                            self.showHeartRateMeasuredDialog(UIButton())
-                        } else {
+                        if self.previousStandardDeviation == -1.0 || self.currentStandardDeviation < self.previousStandardDeviation {
+                            self.currentBPM = validBPM
+                            self.previousStandardDeviation = self.currentStandardDeviation
                             let nextCertainty = 1.0 - (standardDeviation / mean)
                             if nextCertainty < 0 {
                                 self.certaintyPercentage = 0.0
                             } else {
                                 self.certaintyPercentage = 1.0 - (standardDeviation / mean)
                             }
+                        }
+                        if standardDeviation < 10 && HKHealthStore.isHealthDataAvailable() {
+                            self.stop()
+                            self.showHeartRateMeasuredDialog(UIButton())
+                        } else {
                             print("STANDARD DEVIATION:", standardDeviation)
                             print("CERTAINTY PERCENTAGE:", self.certaintyPercentage)
                         }
