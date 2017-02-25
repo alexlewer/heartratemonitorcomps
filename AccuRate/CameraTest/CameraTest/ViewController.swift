@@ -142,7 +142,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             DispatchQueue.main.async {
                 if self.camCovered {
                     print("standard deviation was", self.previousStandardDeviation, "now", self.currentStandardDeviation)
-                    self.previousStandardDeviation = self.currentStandardDeviation
                     self.BPMText.text = String(self.currentBPM) + " BPM"
                     if self.currentBPM > 100 {
                         self.BPMText.frame.size.width = 190
