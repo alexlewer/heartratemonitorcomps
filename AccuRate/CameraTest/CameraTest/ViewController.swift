@@ -21,24 +21,28 @@ public extension UIView {
 
 class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate, MFMailComposeViewControllerDelegate {
     
-    var timer = Timer()
+    var timer : Timer?
+    var isPaused = false
+    var lastPause : TimeInterval?
+    var startTime : TimeInterval?
+    var timePaused : TimeInterval = 0.0
     
     func pulse() {
-        DispatchQueue.main.async {
-            self.heartView.alpha = 0.5
-            self.heartView.fadeIn()
+        if self.camCovered {
+            DispatchQueue.main.async {
+                self.heartView.alpha = 0.5
+                self.heartView.fadeIn()
+            }
         }
     }
     
     let SCREEN_UPDATE_INTERVAL = 1.5 // How often we update the heart rate displayed on screen
     
-    var startTime = TimeInterval()
-    
     var captureDevice : AVCaptureDevice?
     var session : AVCaptureSession?
     
     var camCovered = false // is the camera covered?
-    var lapsing = false; // is the camera not covered, but it's been less than a second?
+    var lapsing = false; // is the camera not covered, but it's been less than a second since the camera was covered?
     
     // Parameters for camera cover algorithm
     let MAX_LUMA_MEAN = Double(100)
@@ -67,7 +71,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var previousMeasuredBPM : Int = 0
     var currentStandardDeviation : Double = -1.0
     var previousStandardDeviation : Double = -1.0
-    
     
     var certaintyPercentage : Double = 0 // 1.0 - (the coefficient of variation for our results)
 
@@ -99,6 +102,42 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         if button.currentTitle == "STOP" {
             toggleFlashlight()
             stop()
+        }
+    }
+    
+    func startTimer() {
+        if timer == nil {
+            timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateTime), userInfo: nil, repeats: true)
+            isPaused = false
+        }
+    }
+    
+    func pauseResumeTimer() {
+        if isPaused || timer == nil {
+            let currentTime = NSDate.timeIntervalSinceReferenceDate
+            if lastPause != nil {
+                timePaused += currentTime - lastPause!
+            }
+            if startTime == nil {
+                startTime = NSDate.timeIntervalSinceReferenceDate
+            }
+            timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateTime), userInfo: nil, repeats: true)
+            isPaused = false
+        } else if timer != nil {
+            timer!.invalidate()
+            isPaused = true
+            lastPause = NSDate.timeIntervalSinceReferenceDate
+        }
+    }
+    
+    func stopTimer() {
+        if timer != nil {
+            timer!.invalidate()
+            timer = nil
+            isPaused = false
+            timePaused = 0.0
+            lastPause = nil
+            startTime = nil
         }
     }
     
@@ -138,17 +177,23 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     // Updates display based on whether or not finger coverage is detected
     func updateDisplayFingerCoverage() {
         if self.camCovered {
+            self.pauseResumeTimer()
             hint1.text = "Signal detected!"
             hint2.text = "Please do not move your finger."
         }
         else {
+            if timer != nil {
+                self.pauseResumeTimer()
+            }
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_normal")
             hint1.text = "Waiting for signal."
             hint2.text = "Please cover both camera and flashlight."
-            timerText.text = "00:00:00"
+            // timerText.text = "00:00:00"
             BPMText.frame.size.width = 175
             BPMText.text = "- - - BPM"
+            self.certaintyText.text = "Certainty: 0%"
+            
         }
     }
 
@@ -168,8 +213,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         tempObsTime = []
         currentBPM = 0
         previousMeasuredBPM = 0
-        startTime = NSDate.timeIntervalSinceReferenceDate
-        timer = Timer()
         certaintyPercentage = 0.0
         previousStandardDeviation = -1.0
     }
@@ -189,7 +232,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
         startCameraProcesses()
         bpmTimer = Timer.scheduledTimer(timeInterval: SCREEN_UPDATE_INTERVAL, target: self, selector: #selector(ViewController.updateDisplayedBPM), userInfo: nil, repeats: true)
-        timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateTime), userInfo: nil, repeats: true)
     }
     
     // Stops/resets all UI elements and reinitializes variables
@@ -198,7 +240,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         // End camera processes
         toggleFlashlight()
         session!.stopRunning()
-        timer.invalidate()
+        self.stopTimer()
         pulseTimer.invalidate()
         
         // Asynchronously update UI to initial state
@@ -356,7 +398,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         DispatchQueue.main.async {
             let currentTime = NSDate.timeIntervalSinceReferenceDate
             //Find the difference between current time and start time.
-            var elapsedTime: TimeInterval = currentTime - self.startTime
+            var elapsedTime: TimeInterval = currentTime - self.startTime! - self.timePaused
             if elapsedTime > 8000000 { // To fix underflow error that causes wonky display in line above
                 elapsedTime = 0
             }
