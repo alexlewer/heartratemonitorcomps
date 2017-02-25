@@ -1,9 +1,8 @@
 //
 //  AppDelegate.swift
-//  CameraTest
+//  AccuRate
 //
-//  Created by Grant Terrien on 9/30/16.
-//  Copyright © 2016 com.terrien. All rights reserved.
+//  Created by Aidan Holloway-Bidwell, Lucy Lu, Grant Terrien, Renzhi Wu.
 //
 
 import UIKit
