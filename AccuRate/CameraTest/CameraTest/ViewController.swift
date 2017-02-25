@@ -41,7 +41,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var session : AVCaptureSession?
     
     var camCovered = false // is the camera covered?
-    var lapsing = false; // is the camera not covered, but it's been less than a second since the camera was covered?
     
     // Parameters for camera cover algorithm
     let MAX_LUMA_MEAN = Double(100)
@@ -115,6 +114,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             }
             timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateTime), userInfo: nil, repeats: true)
             isPaused = false
+            print("trying to restart timer")
         }
     }
     
@@ -393,20 +393,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         DispatchQueue.main.async {
             if covered != self.camCovered {
                 self.camCovered = covered
-                
-                // If camera becomes uncovered, wait for 1 second while keeping timer running, then if camera
-                // is still uncovered, reset display.
-                if !self.camCovered && !self.lapsing {
-                    self.lapsing = true;
-                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
-                        if !self.camCovered && self.button.currentTitle == "STOP" {
-                            self.updateDisplayFingerCoverage()
-                        }
-                        self.lapsing = false;
-                    })
-                } else if !self.lapsing && self.button.currentTitle == "STOP" {
-                    self.updateDisplayFingerCoverage()
-                }
+                self.updateDisplayFingerCoverage()
             }
         }
         return mean
@@ -553,7 +540,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                         let mean = meanAndStandardDeviation.0
                         let standardDeviation = meanAndStandardDeviation.1
                         self.currentStandardDeviation = standardDeviation
-                        if self.previousStandardDeviation == -1.0 || self.currentStandardDeviation < self.previousStandardDeviation {
+                        if (self.previousStandardDeviation == -1.0 || self.currentStandardDeviation < self.previousStandardDeviation) {
                             self.currentBPM = validBPM
                             self.previousStandardDeviation = self.currentStandardDeviation
                             let nextCertainty = 1.0 - (standardDeviation / mean)
