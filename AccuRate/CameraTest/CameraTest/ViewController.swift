@@ -140,7 +140,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     func updateDisplayedBPM() {
         if self.currentBPM != 0 {
             DispatchQueue.main.async {
-                if self.previousStandardDeviation == -1.0 || self.currentStandardDeviation < self.previousStandardDeviation {
+                if self.camCovered {
                     print("standard deviation was", self.previousStandardDeviation, "now", self.currentStandardDeviation)
                     self.previousStandardDeviation = self.currentStandardDeviation
                     self.BPMText.text = String(self.currentBPM) + " BPM"
@@ -529,7 +529,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                             validBPM = Int(avg)
                         }
                         previousBPM = validBPM
-                        self.currentBPM = validBPM
+                        
+                        if self.previousStandardDeviation == -1.0 || self.currentStandardDeviation < self.previousStandardDeviation {
+                            self.currentBPM = validBPM
+                            self.previousStandardDeviation = self.currentStandardDeviation
+                        }
                         
                         print("we choose: ", currentBPM)
                         
