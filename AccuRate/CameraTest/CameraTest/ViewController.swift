@@ -230,6 +230,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             self.button.setTitle("STOP", for: UIControlState.normal)
             self.hint1.text = "Waiting for signal."
             self.hint2.text = "Please cover both camera and flashlight."
+            self.camCovered = false
         }
         startCameraProcesses()
         bpmTimer = Timer.scheduledTimer(timeInterval: SCREEN_UPDATE_INTERVAL, target: self, selector: #selector(ViewController.updateDisplayedBPM), userInfo: nil, repeats: true)
