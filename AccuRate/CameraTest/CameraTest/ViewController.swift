@@ -20,7 +20,6 @@ public extension UIView {
 }
 
 class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate, MFMailComposeViewControllerDelegate {
-    
     var timer : Timer?
     var isPaused = false
     var lastPause : TimeInterval?
@@ -220,6 +219,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     
     // Starts process of initializing state
     func start() {
+        guard ProcessInfo.processInfo.isLowPowerModeEnabled == false else {
+            let alertController = UIAlertController(title: "Sorry", message:
+                "This app cannot function properly under Low Power Mode.", preferredStyle: UIAlertControllerStyle.alert)
+            alertController.addAction(UIAlertAction(title: "Dismiss", style: UIAlertActionStyle.default,handler: nil))
+            self.present(alertController, animated: true, completion: nil)
+            return
+        }
         initialize()
         DispatchQueue.main.async {
             self.displayHeart(imageName: "Heart_normal")
@@ -261,15 +267,22 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         if button.currentTitle == "START" {
             start()
         }
-        else {
+        else {  
             stop()
         }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.inBackground(notification:)), name: NSNotification.Name.UIApplicationWillResignActive, object: UIApplication.shared)
         displayHeart(imageName: "Heart_inactive")
         initialize()
+    }
+    
+    func inBackground(notification: NSNotification) {
+        if button.currentTitle == "STOP" {
+            stop()
+        }
     }
     
     func toggleFlashlight() {
