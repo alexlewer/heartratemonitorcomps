@@ -183,6 +183,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         else {
             if timer != nil {
                 self.pauseResumeTimer()
+                heartView.removeFromSuperview()
+                displayHeart(imageName: "Heart_normal")
             }
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_normal")
