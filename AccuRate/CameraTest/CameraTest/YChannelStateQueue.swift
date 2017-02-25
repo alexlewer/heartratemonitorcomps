@@ -17,7 +17,7 @@ class YChannelStateQueue: NSObject {
     
     func addValue(value : Double) {
         if ((valuesArray?.count)! >= 3) { // Should only ever reach 3
-            valuesArray?.popLast()
+             valuesArray?.popLast()
         }
         valuesArray?.insert(value, at: 0)
     }
