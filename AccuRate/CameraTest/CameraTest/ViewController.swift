@@ -26,8 +26,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     var timePaused : TimeInterval = 0.0
     
     func pulse() {
+        print("PULSE!")
         if self.camCovered {
+            print("PULSE!!!")
             DispatchQueue.main.async {
+                print("PULSE!!!!!")
                 self.heartView.alpha = 0.5
                 self.heartView.fadeIn()
             }
@@ -240,11 +243,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     // Stops/resets all UI elements and reinitializes variables
     func stop() {
         bpmTimer.invalidate()
+        self.stopTimer()
+        pulseTimer.invalidate()
+        
         // End camera processes
         toggleFlashlight()
         session!.stopRunning()
-        self.stopTimer()
-        pulseTimer.invalidate()
         
         // Asynchronously update UI to initial state
         DispatchQueue.main.async {
@@ -258,6 +262,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             self.BPMText.frame.size.width = 175
             self.BPMText.text = "- - - BPM"
             self.certaintyText.text = "Certainty: 0%"
+            self.camCovered = false
         }
     }
     
@@ -409,7 +414,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         DispatchQueue.main.async {
             let currentTime = NSDate.timeIntervalSinceReferenceDate
             //Find the difference between current time and start time.
-            var elapsedTime: TimeInterval = currentTime - self.startTime! - self.timePaused
+            var elapsedTime: TimeInterval = currentTime - self.timePaused
+            if self.startTime != nil {
+                elapsedTime -= self.startTime! 
+            }
             if elapsedTime > 8000000 { // To fix underflow error that causes wonky display in line above
                 elapsedTime = 0
             }
