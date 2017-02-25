@@ -105,14 +105,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
         }
     }
     
-    func startTimer() {
-        if timer == nil {
-            timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateTime), userInfo: nil, repeats: true)
-            isPaused = false
-        }
-    }
-    
-    func pauseResumeTimer() {
+    func startResumeTimer() {
         if isPaused || timer == nil {
             let currentTime = NSDate.timeIntervalSinceReferenceDate
             if lastPause != nil {
@@ -123,7 +116,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
             }
             timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateTime), userInfo: nil, repeats: true)
             isPaused = false
-        } else if timer != nil {
+        }
+    }
+    
+    func pauseTimer() {
+        if timer != nil && !isPaused {
             timer!.invalidate()
             isPaused = true
             lastPause = NSDate.timeIntervalSinceReferenceDate
@@ -177,14 +174,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
     // Updates display based on whether or not finger coverage is detected
     func updateDisplayFingerCoverage() {
         if self.camCovered {
-            self.pauseResumeTimer()
+            self.startResumeTimer()
             hint1.text = "Signal detected!"
             hint2.text = "Please do not move your finger."
         }
         else {
-            if timer != nil {
-                self.pauseResumeTimer()
-            }
+            self.pauseTimer()
             heartView.removeFromSuperview()
             displayHeart(imageName: "Heart_normal")
             hint1.text = "Waiting for signal."
