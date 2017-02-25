@@ -548,7 +548,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                             self.stop()
                             self.showHeartRateMeasuredDialog(UIButton())
                         } else {
-                            self.certaintyPercentage = 1.0 - (standardDeviation / mean)
+                            let nextCertainty = 1.0 - (standardDeviation / mean)
+                            if nextCertainty < 0 {
+                                self.certaintyPercentage = 0.0
+                            } else {
+                                self.certaintyPercentage = 1.0 - (standardDeviation / mean)
+                            }
                             print("STANDARD DEVIATION:", standardDeviation)
                             print("CERTAINTY PERCENTAGE:", self.certaintyPercentage)
                         }
