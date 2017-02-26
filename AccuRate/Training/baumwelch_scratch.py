@@ -114,12 +114,14 @@ def baum_welch(A, B, pi, observations):
 	cur_pi = pi
 	num_states, num_obs = B.shape
 	T = len(observations)
+	pastProb = 0
 
 	count = 1
 	while True:
 		alph = alpha(curA, curB, cur_pi, observations)
 		bet = beta(curA, curB, observations)
 
+		curProb = prob_obs(alph)
 		#for r in alph.T:
 			#print(r)
 		x = xi(curA, curB, alph, bet, observations)
@@ -131,8 +133,10 @@ def baum_welch(A, B, pi, observations):
 		curB = b_hat(oldB, gam, observations)
 		cur_pi = gam[0]
 
-		if np.linalg.norm(oldA - curA) < .00001 and np.linalg.norm(oldB - curB) < .00001:
+		if (curProb == pastProb) or (np.linalg.norm(oldA - curA) < .00000001 and np.linalg.norm(oldB - curB) < .00000001):
 			break
+
+		pastProb = curProb
 
 		count += 1
 		print(".",end='')
@@ -193,6 +197,11 @@ def test(filepath):
 	ourA = ourA.reshape((-1,4))
 	ourB = ourB.reshape((-1,4))
 
+	sumA = np.zeros((4,4))
+	sumB = np.zeros((4,4))
+	sumPi = [0,0,0,0]
+	count = 0
+
 	guyA, guyB, guyPi = np.zeros((4,4)), np.zeros((4,4)), []
 	guyA[:], guyB[:], guyPi[:] = ourA, ourB, ourPi
 	fancyA, fancyB, fancyPi = np.zeros((4,4)), np.zeros((4,4)), []
@@ -211,29 +220,49 @@ def test(filepath):
 					except ValueError:
 						pass
 
+				O1 = []
+				O2 = []
+				O1[:] = O[:int(len(O) / 2)]
+				O2[:] = O[int(len(O) / 2):]
+
 				print("Running our model...")
-				ourA, ourB, ourPi = baum_welch(ourA, ourB, ourPi, O)
+				print("First half")
+				newA1, newB1, newPi1 = baum_welch(ourA.copy(), ourB.copy(), ourPi.copy(), O1)
+				print("Second half")
+				newA2, newB2, newPi2 = baum_welch(ourA.copy(), ourB.copy(), ourPi.copy(), O2)
+
+				sumA += newA1
+				sumB += newB1
+				sumPi += newPi1
+
+				sumA += newA2
+				sumB += newB2
+				sumPi += newPi2
+
+				count += 2
 				
-				print("Running Guy's model...")
-				hmm2 = DiscreteHMM(4,4,guyA,guyB,guyPi,init_type='user',precision=np.longdouble,verbose=True)
-				hmm2.train(O, iterations=1000,epsilon=.00001)
-				guyA, guyB, guyPi = hmm2.A, hmm2.B, hmm2.pi
+				#print("Running Guy's model...")
+				#hmm2 = DiscreteHMM(4,4,guyA,guyB,guyPi,init_type='user',precision=np.longdouble,verbose=True)
+				#hmm2.train(O, iterations=1000,epsilon=.00001)
+				#guyA, guyB, guyPi = hmm2.A, hmm2.B, hmm2.pi
 
 				#print("Running fancy model...")
 				#fancyA, fancyB = fancy.baum_welch(fancyA, fancyB, fancyPi, np.array(O))
 
 	with open("results_alldata_vanillamatrices.txt", 'w') as file:
 		file.write("Our Results:\n")
-		file.write("A: " + str(ourA) + "\n")
-		file.write("B: " + str(ourB) + "\n")
-		file.write("Pi: " + str(ourPi) +  "\n\n")
-		file.write("Guy's Results:\n")
-		file.write("A: " + str(guyA) + "\n")
-		file.write("B: " + str(guyB) + "\n")
-		file.write("Pi: " + str(guyPi) +  "\n\n")
+		file.write("A: " + str(sumA / count) + "\n")
+		file.write("B: " + str(sumB / count) + "\n")
+		file.write("Pi: " + str(sumPi / count) +  "\n\n")
+		#file.write("Guy's Results:\n")
+		#file.write("A: " + str(guyA) + "\n")
+		#file.write("B: " + str(guyB) + "\n")
+		#file.write("Pi: " + str(guyPi) +  "\n\n")
 		#file.write("Fancy Results:\n")
 		#file.write("A: " + str(fancyA) + "\n")
 		#file.write("B: " + str(fancyB) + "\n")
+
+
 
 
 
