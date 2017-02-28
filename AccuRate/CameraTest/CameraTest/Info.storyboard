@@ -63,9 +63,9 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" textAlignment="natural" lineBreakMode="wordWrap" numberOfLines="6" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="a4N-n0-5SP">
-                                <rect key="frame" x="46" y="392" width="322" height="161"/>
+                                <rect key="frame" x="59" y="392" width="296" height="161"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                <string key="text">When your heart beats, freshly oxygenated blood flows to your fingertips. This blood is darker than the blood it replaces, and this change in darkness can be detected by your phone's camera. In this way, your phone can see your heart pulse and calculate your heart rate.</string>
+                                <string key="text">    When your heart beats, the transparency of the skin in your fingertip is reduced. This change in transparency can be detected by your phone's camera. In this way, your phone can see your heart pulse and calculate your heart rate.</string>
                                 <fontDescription key="fontDescription" type="system" pointSize="12"/>
                                 <color key="textColor" red="0.20000000300000001" green="0.20000000300000001" blue="0.20000000300000001" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
@@ -99,7 +99,7 @@
                     </connections>
                 </swipeGestureRecognizer>
             </objects>
-            <point key="canvasLocation" x="-184.80000000000001" y="-111.99400299850076"/>
+            <point key="canvasLocation" x="-188" y="-113.79310344827587"/>
         </scene>
     </scenes>
     <resources>
