@@ -68,9 +68,11 @@ def xi(A, B, alpha, beta, observations):
 
 	return xi
 
+# Probability of entire observation sequence
 def prob_obs(alpha):
 	return sum(alpha.T[-1])
 
+# New transition probabilities
 def a_hat(xi):
 	T, num_states = xi.shape[:2]
 	a_hat = np.zeros((num_states, num_states), dtype=np.longdouble)
@@ -95,6 +97,7 @@ def gamma(alpha, beta, observations):
 
 	return gamma
 
+# New emission probabilities
 def b_hat(B, gamma, observations):
 	num_states, num_obs = B.shape
 	T = len(observations)
@@ -110,13 +113,14 @@ def b_hat(B, gamma, observations):
 
 	return b_hat
 
-def baum_welch(A, B, pi, observations):
+def baum_welch(A, B, pi, observations, display_graph=False):
 	curA = A
 	curB = B
 	cur_pi = pi
 	num_states, num_obs = B.shape
 	T = len(observations)
 
+	# variables for displaying graph of probabilities changing over iterations
 	ind = []
 	p = []
 	A1, A2 ,A3 ,A4 ,A5 ,A6 ,A7 ,A8 = [], [], [], [], [], [], [], []
@@ -124,47 +128,51 @@ def baum_welch(A, B, pi, observations):
 
 	count = 1
 	while True:
+		# calculate forward and backward probabilities based on current matrices
 		alph = alpha(curA, curB, cur_pi, observations)
 		bet = beta(curA, curB, observations)
 
-		ind.append(count)
-		p.append(prob_obs(alph))
-		A1.append(curA[0][0])
-		A2.append(curA[0][1])
-		A3.append(curA[1][1])
-		A4.append(curA[1][2])
-		A5.append(curA[2][2])
-		A6.append(curA[2][3])
-		A7.append(curA[3][3])
-		A8.append(curA[3][0])
-		B1.append(curB[0][0])
-		B2.append(curB[0][1])
-		B3.append(curB[0][2])
-		B4.append(curB[0][3])
-		B5.append(curB[1][0])
-		B6.append(curB[1][1])
-		B7.append(curB[1][2])
-		B8.append(curB[1][3])
-		B9.append(curB[2][0])
-		B10.append(curB[2][1])
-		B11.append(curB[2][2])
-		B12.append(curB[2][3])
-		B13.append(curB[3][0])
-		B14.append(curB[3][1])
-		B15.append(curB[3][2])
-		B16.append(curB[3][3])
+		if display_graph:
+			ind.append(count)
+			p.append(prob_obs(alph))
+			A1.append(curA[0][0])
+			A2.append(curA[0][1])
+			A3.append(curA[1][1])
+			A4.append(curA[1][2])
+			A5.append(curA[2][2])
+			A6.append(curA[2][3])
+			A7.append(curA[3][3])
+			A8.append(curA[3][0])
+			B1.append(curB[0][0])
+			B2.append(curB[0][1])
+			B3.append(curB[0][2])
+			B4.append(curB[0][3])
+			B5.append(curB[1][0])
+			B6.append(curB[1][1])
+			B7.append(curB[1][2])
+			B8.append(curB[1][3])
+			B9.append(curB[2][0])
+			B10.append(curB[2][1])
+			B11.append(curB[2][2])
+			B12.append(curB[2][3])
+			B13.append(curB[3][0])
+			B14.append(curB[3][1])
+			B15.append(curB[3][2])
+			B16.append(curB[3][3])
 
-		#for r in alph.T:
-			#print(r)
+		# calculate prob of making transition at time t and 
+		# prob of being in state at time t
 		x = xi(curA, curB, alph, bet, observations)
 		gam = gamma(alph, bet, observations)
 
 		oldA, oldB, old_pi = curA, curB, cur_pi
 
+		# update matrices to new probabilities
 		curA = a_hat(x)
 		curB = b_hat(oldB, gam, observations)
 		cur_pi = gam[0]
 
+		# if we are close enough to maximizing the probability of our observation sequence, stop the algorithm
 		if np.linalg.norm(oldA - curA) < .00001 and np.linalg.norm(oldB - curB) < .00001:
 			break
 
@@ -173,64 +181,41 @@ def baum_welch(A, B, pi, observations):
 		sys.stdout.flush()
 
 	print(count," iterations.")
-	f, axarr = plt.subplots(2, sharex=True)
-	axarr[0].set_axis_bgcolor('black')
-	axarr[1].set_axis_bgcolor('black')
-	axarr[0].plot(ind,B1,'c')
-	axarr[0].plot(ind,B2,'c')
-	axarr[0].plot(ind,B3,'c')
-	axarr[0].plot(ind,B4,'c')
-	axarr[0].plot(ind,B5,'c')
-	axarr[0].plot(ind,B6,'c')
-	axarr[0].plot(ind,B7,'c')
-	axarr[0].plot(ind,B8,'c')
-	axarr[0].plot(ind,B9,'c')
-	axarr[0].plot(ind,B10,'c')
-	axarr[0].plot(ind,B11,'c')
-	axarr[0].plot(ind,B12,'c')
-	axarr[0].plot(ind,B13,'c')
-	axarr[0].plot(ind,B14,'c')
-	axarr[0].plot(ind,B15,'c')
-	axarr[0].plot(ind,B16,'c')
-	axarr[0].plot(ind,A1,'y')
-	axarr[0].plot(ind,A2,'y')
-	axarr[0].plot(ind,A3,'y')
-	axarr[0].plot(ind,A4,'y')
-	axarr[0].plot(ind,A5,'y')
-	axarr[0].plot(ind,A6,'y')
-	axarr[0].plot(ind,A7,'y')
-	axarr[0].plot(ind,A8,'y')
-	axarr[1].plot(ind,p,'r')
 
-	plt.show()
-	plt.savefig('baum_welch.png')
+	if display_graph:
+		f, axarr = plt.subplots(2, sharex=True)
+		axarr[0].set_axis_bgcolor('black')
+		axarr[1].set_axis_bgcolor('black')
+		axarr[0].plot(ind,B1,'c')
+		axarr[0].plot(ind,B2,'c')
+		axarr[0].plot(ind,B3,'c')
+		axarr[0].plot(ind,B4,'c')
+		axarr[0].plot(ind,B5,'c')
+		axarr[0].plot(ind,B6,'c')
+		axarr[0].plot(ind,B7,'c')
+		axarr[0].plot(ind,B8,'c')
+		axarr[0].plot(ind,B9,'c')
+		axarr[0].plot(ind,B10,'c')
+		axarr[0].plot(ind,B11,'c')
+		axarr[0].plot(ind,B12,'c')
+		axarr[0].plot(ind,B13,'c')
+		axarr[0].plot(ind,B14,'c')
+		axarr[0].plot(ind,B15,'c')
+		axarr[0].plot(ind,B16,'c')
+		axarr[0].plot(ind,A1,'y')
+		axarr[0].plot(ind,A2,'y')
+		axarr[0].plot(ind,A3,'y')
+		axarr[0].plot(ind,A4,'y')
+		axarr[0].plot(ind,A5,'y')
+		axarr[0].plot(ind,A6,'y')
+		axarr[0].plot(ind,A7,'y')
+		axarr[0].plot(ind,A8,'y')
+		axarr[1].plot(ind,p,'r')
+
+		plt.show()
+		plt.savefig('baum_welch.png')
 
 	return curA, curB, cur_pi
-
-def train(A, B, initial, filepath):
-	cur_pi = initial
-
-	with open(filepath, 'r') as file:
-		obs_files = file.readlines()
-		for obs_filepath in obs_files:
-			print("Training on ", obs_filepath.rstrip())
-			with open(obs_filepath.rstrip(), 'r') as obs_file:
-				O = []
-				reader = csv.reader(obs_file)
-				for row in reader:
-					try:
-						O.append(int(row[2]))
-					except ValueError:
-						pass
-
-				A, B, cur_pi = baum_welch(A, B, cur_pi, O)
-
-	with open("results.txt", 'w') as file:
-		file.write(str(A))
-		file.write(str(B))
-		file.write(str(cur_pi))
-
-	return A, B, cur_pi
 
 def simple_test():
 	A = np.array([.3, .7, .1, .9])
@@ -252,17 +237,9 @@ def simple_test():
 	print("Gamma: ", gam)
 	x = xi(A, B, alph, bet, O)
 	print("Xi: ", x)
-			
-	"""			#for r in alph.T:
-					#print(r)
-			
-				oldA, oldB, old_pi = curA, curB, cur_pi
-			
-				curA = a_hat(x)
-				curB = b_hat(oldB, gam, observations)
-				cur_pi = gam[0]"""
 
-def test(filepath):
+def train(filepath,display_graph=False):
+
 	#ourA = np.array([0.6794, 0.3206, 0.0, 0.0, \
 	#			  0.0, 0.5366, 0.4634, 0.0, \
 	#			  0.0, 0.0, 0.3485, 0.6516, \
@@ -295,9 +272,6 @@ def test(filepath):
 	fancyA, fancyB, fancyPi = np.zeros((4,4)), np.zeros((4,4)), []
 	fancyA[:], fancyB[:], fancyPi[:] = ourA, ourB, ourPi
 
-	sumA = np.zeros((4,4))
-	sumB = np.zeros((4,4))
-	sumPi = [0,0,0,0]
 	count = 0
 
 	with open("data/" + filepath, 'r') as file:
@@ -314,12 +288,7 @@ def test(filepath):
 						pass
 
 				print("Running our model...")
-				newA, newB, newPi = baum_welch(ourA, ourB, ourPi, O)
-
-				sumA += newA
-				sumB += newB
-				sumPi += newPi
-
+				ourA, ourB, ourPi = baum_welch(ourA, ourB, ourPi, O, display_graph=display_graph)
 
 				count += 1
 				
@@ -331,11 +300,11 @@ def test(filepath):
 				#print("Running fancy model...")
 				#fancyA, fancyB = fancy.baum_welch(fancyA, fancyB, fancyPi, np.array(O))
 
-	with open("results_average_vanilla.txt", 'w') as file:
+	with open("results_vanilla.txt", 'w') as file:
 		file.write("Our Results:\n")
-		file.write("A: " + str(sumA / count) + "\n")
-		file.write("B: " + str(sumB / count) + "\n")
-		file.write("Pi: " + str(sumPi / count) +  "\n\n")
+		file.write("A: " + str(ourA) + "\n")
+		file.write("B: " + str(ourB) + "\n")
+		file.write("Pi: " + str(ourPi) +  "\n\n")
 		#file.write("Guy's Results:\n")
 		#file.write("A: " + str(guyA) + "\n")
 		#file.write("B: " + str(guyB) + "\n")
