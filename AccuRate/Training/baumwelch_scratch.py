@@ -5,13 +5,8 @@ import csv
 from DiscreteHMM import DiscreteHMM
 import sys
 import fancy_bw as fancy
-<<<<<<< HEAD
-from decimal import *
-import matplotlib.pyplot as plt
-=======
 from matplotlib import pyplot as plt
 import math
->>>>>>> d78e38c7232de97ae4fda5af24875384b30a385f
 
 # calculate forward probability matrix
 def alpha(A, B, pi, observations):
@@ -118,7 +113,7 @@ def b_hat(B, gamma, observations):
 
 	return b_hat
 
-def baum_welch(A, B, pi, observations, display_graph=False):
+def baum_welch(A, B, pi, observations, display_graph=False, save_name='baum_welch.png'):
 	curA = A
 	curB = B
 	cur_pi = pi
@@ -138,7 +133,7 @@ def baum_welch(A, B, pi, observations, display_graph=False):
 		bet = beta(curA, curB, observations)
 
 		if display_graph:
-			nd.append(count)
+			ind.append(count)
 			p.append(math.log(prob_obs(alph),10))
 			A1.append(curA[0][0])
 			A2.append(curA[0][1])
@@ -187,40 +182,41 @@ def baum_welch(A, B, pi, observations, display_graph=False):
 
 	print(count," iterations.")
 	if display_graph:
-		f, axarr = plt.subplots(2, sharex=True)
-		axarr[0].set_axis_bgcolor('black')
-		axarr[0].set_title('Transition and Emission Matrix Values')
-		axarr[1].set_axis_bgcolor('black')
-		axarr[1].set_title('Probability of Observation Sequence (log)')
-		axarr[0].plot(ind,B1,'c')
-		axarr[0].plot(ind,B2,'c')
-		axarr[0].plot(ind,B3,'c')
-		axarr[0].plot(ind,B4,'c')
-		axarr[0].plot(ind,B5,'c')
-		axarr[0].plot(ind,B6,'c')
-		axarr[0].plot(ind,B7,'c')
-		axarr[0].plot(ind,B8,'c')
-		axarr[0].plot(ind,B9,'c')
-		axarr[0].plot(ind,B10,'c')
-		axarr[0].plot(ind,B11,'c')
-		axarr[0].plot(ind,B12,'c')
-		axarr[0].plot(ind,B13,'c')
-		axarr[0].plot(ind,B14,'c')
-		axarr[0].plot(ind,B15,'c')
-		axarr[0].plot(ind,B16,'c')
-		axarr[0].plot(ind,A1,'y')
-		axarr[0].plot(ind,A2,'y')
-		axarr[0].plot(ind,A3,'y')
-		axarr[0].plot(ind,A4,'y')
-		axarr[0].plot(ind,A5,'y')
-		axarr[0].plot(ind,A6,'y')
-		axarr[0].plot(ind,A7,'y')
-		axarr[0].plot(ind,A8,'y')
-		axarr[1].plot(ind,p,'m')
-		axarr[1].set_xlabel('Number of Iterations')
+		f, axarr = plt.subplots(3, sharex=True)
+		#axarr[0].set_axis_bgcolor('black')
+		axarr[0].set_title('Transition Matrix Values')
+		axarr[1].set_title('Emission Matrix Values')
+		#axarr[1].set_axis_bgcolor('black')
+		axarr[2].set_title('Probability of Observation Sequence (log)')
+		axarr[1].plot(ind,B1,'b')
+		axarr[1].plot(ind,B2,'b')
+		axarr[1].plot(ind,B3,'b')
+		axarr[1].plot(ind,B4,'b')
+		axarr[1].plot(ind,B5,'b')
+		axarr[1].plot(ind,B6,'b')
+		axarr[1].plot(ind,B7,'b')
+		axarr[1].plot(ind,B8,'b')
+		axarr[1].plot(ind,B9,'b')
+		axarr[1].plot(ind,B10,'b')
+		axarr[1].plot(ind,B11,'b')
+		axarr[1].plot(ind,B12,'b')
+		axarr[1].plot(ind,B13,'b')
+		axarr[1].plot(ind,B14,'b')
+		axarr[1].plot(ind,B15,'b')
+		axarr[1].plot(ind,B16,'b')
+		axarr[0].plot(ind,A1,'brown')
+		axarr[0].plot(ind,A2,'brown')
+		axarr[0].plot(ind,A3,'brown')
+		axarr[0].plot(ind,A4,'brown')
+		axarr[0].plot(ind,A5,'brown')
+		axarr[0].plot(ind,A6,'brown')
+		axarr[0].plot(ind,A7,'brown')
+		axarr[0].plot(ind,A8,'brown')
+		axarr[2].plot(ind,p,'r')
+		axarr[2].set_xlabel('Number of Iterations')
 
 		plt.show()
-		plt.savefig('baum_welch.png')
+		plt.savefig(save_name)
 
 	return curA, curB, cur_pi
 
@@ -267,9 +263,9 @@ def train(filepath="training_files.txt",display_graph=False):
 				.25, .25, .25, .25, \
 				.25, .25, .25, .25])
 
-	ourPi = [.25, .25, .25, .25]
+	# ourPi = [.25, .25, .25, .25]
 
-	# ourPi = [0.25, 0.20, 0.10, 0.45]
+	ourPi = [0.25, 0.20, 0.10, 0.45]
 
 	ourA = ourA.reshape((-1,4))
 	ourB = ourB.reshape((-1,4))
@@ -300,9 +296,9 @@ def train(filepath="training_files.txt",display_graph=False):
 				print("Running our model...")
 
 				print("First half")
-				ourA, ourB, ourPi = baum_welch(ourA.copy(), ourB.copy(), ourPi.copy(), O1, display_graph=display_graph)
+				ourA, ourB, ourPi = baum_welch(ourA.copy(), ourB.copy(), ourPi.copy(), O1, display_graph=display_graph, save_name='bm_1.png')
 				print("Second half")
-				ourA, ourB, ourPi = baum_welch(ourA.copy(), ourB.copy(), ourPi.copy(), O2, display_graph=display_graph)
+				ourA, ourB, ourPi = baum_welch(ourA.copy(), ourB.copy(), ourPi.copy(), O2, display_graph=display_graph, save_name='bm_2.png')
 				
 				#print("Running Guy's model...")
 				#hmm2 = DiscreteHMM(4,4,guyA,guyB,guyPi,init_type='user',precision=np.longdouble,verbose=True)
