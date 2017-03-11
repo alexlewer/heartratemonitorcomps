@@ -5,8 +5,13 @@ import csv
 from DiscreteHMM import DiscreteHMM
 import sys
 import fancy_bw as fancy
+<<<<<<< HEAD
 from decimal import *
 import matplotlib.pyplot as plt
+=======
+from matplotlib import pyplot as plt
+import math
+>>>>>>> d78e38c7232de97ae4fda5af24875384b30a385f
 
 # calculate forward probability matrix
 def alpha(A, B, pi, observations):
@@ -133,8 +138,8 @@ def baum_welch(A, B, pi, observations, display_graph=False):
 		bet = beta(curA, curB, observations)
 
 		if display_graph:
-			ind.append(count)
-			p.append(prob_obs(alph))
+			nd.append(count)
+			p.append(math.log(prob_obs(alph),10))
 			A1.append(curA[0][0])
 			A2.append(curA[0][1])
 			A3.append(curA[1][1])
@@ -181,11 +186,12 @@ def baum_welch(A, B, pi, observations, display_graph=False):
 		sys.stdout.flush()
 
 	print(count," iterations.")
-
 	if display_graph:
 		f, axarr = plt.subplots(2, sharex=True)
 		axarr[0].set_axis_bgcolor('black')
+		axarr[0].set_title('Transition and Emission Matrix Values')
 		axarr[1].set_axis_bgcolor('black')
+		axarr[1].set_title('Probability of Observation Sequence (log)')
 		axarr[0].plot(ind,B1,'c')
 		axarr[0].plot(ind,B2,'c')
 		axarr[0].plot(ind,B3,'c')
@@ -210,7 +216,8 @@ def baum_welch(A, B, pi, observations, display_graph=False):
 		axarr[0].plot(ind,A6,'y')
 		axarr[0].plot(ind,A7,'y')
 		axarr[0].plot(ind,A8,'y')
-		axarr[1].plot(ind,p,'r')
+		axarr[1].plot(ind,p,'m')
+		axarr[1].set_xlabel('Number of Iterations')
 
 		plt.show()
 		plt.savefig('baum_welch.png')
@@ -238,7 +245,7 @@ def simple_test():
 	x = xi(A, B, alph, bet, O)
 	print("Xi: ", x)
 
-def train(filepath,display_graph=False):
+def train(filepath="training_files.txt",display_graph=False):
 
 	#ourA = np.array([0.6794, 0.3206, 0.0, 0.0, \
 	#			  0.0, 0.5366, 0.4634, 0.0, \
@@ -272,8 +279,6 @@ def train(filepath,display_graph=False):
 	fancyA, fancyB, fancyPi = np.zeros((4,4)), np.zeros((4,4)), []
 	fancyA[:], fancyB[:], fancyPi[:] = ourA, ourB, ourPi
 
-	count = 0
-
 	with open("data/" + filepath, 'r') as file:
 		obs_files = file.readlines()
 		for obs_filepath in obs_files:
@@ -287,10 +292,17 @@ def train(filepath,display_graph=False):
 					except ValueError:
 						pass
 
-				print("Running our model...")
-				ourA, ourB, ourPi = baum_welch(ourA, ourB, ourPi, O, display_graph=display_graph)
+				O1 = []
+				O2 = []
+				O1[:] = O[:int(len(O) / 2)]
+				O2[:] = O[int(len(O) / 2):]
 
-				count += 1
+				print("Running our model...")
+
+				print("First half")
+				ourA, ourB, ourPi = baum_welch(ourA.copy(), ourB.copy(), ourPi.copy(), O1, display_graph=display_graph)
+				print("Second half")
+				ourA, ourB, ourPi = baum_welch(ourA.copy(), ourB.copy(), ourPi.copy(), O2, display_graph=display_graph)
 				
 				#print("Running Guy's model...")
 				#hmm2 = DiscreteHMM(4,4,guyA,guyB,guyPi,init_type='user',precision=np.longdouble,verbose=True)
@@ -312,6 +324,8 @@ def train(filepath,display_graph=False):
 		#file.write("Fancy Results:\n")
 		#file.write("A: " + str(fancyA) + "\n")
 		#file.write("B: " + str(fancyB) + "\n")
+
+
 
 
 

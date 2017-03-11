@@ -1,1 +1,1 @@
-lucy.csv
+small.csv
