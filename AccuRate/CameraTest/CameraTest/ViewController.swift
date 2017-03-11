@@ -647,6 +647,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, AVCaptur
                     [0.0, 0.7205, 0.0102, 0.2694],
                     [0.2894, 0.3731, 0.3362, 0.0023],
                     [0.0005, 0.8440, 0.0021, 0.1534]]
+        
         let p = [0.25, 0.20, 0.10, 0.45]
         
         // our matrices (with BayesHeart as initial)
